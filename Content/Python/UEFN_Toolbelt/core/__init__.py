@@ -85,6 +85,21 @@ def detect_project_mount() -> str:
     return "Game"
 
 
+def resolve_scan_path(scan_path: str) -> str:
+    """
+    Resolve an empty scan_path to the project's Content Browser mount point.
+
+    Tools that default scan_path="" call this at runtime so they scan the user's
+    project instead of /Game (which in UEFN is the entire Fortnite content tree
+    and crashes the engine when iterated — Quirk #32).
+
+    Pass a non-empty string to override (e.g. scan_path="/MyProject/Meshes").
+    """
+    if scan_path:
+        return scan_path
+    return f"/{detect_project_mount()}"
+
+
 def project_content_dir() -> str:
     """
     Return the user's project Content directory path on disk.

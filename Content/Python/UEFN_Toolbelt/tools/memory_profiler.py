@@ -54,7 +54,7 @@ import unreal
 
 from ..core import (
     log_info, log_warning, log_error,
-    load_asset, with_progress,
+    load_asset, with_progress, resolve_scan_path,
 )
 from ..registry import register_tool
 
@@ -197,7 +197,7 @@ def _write_report(data: dict) -> str:
     description="Full island memory scan — textures, meshes, sounds. Saves JSON report.",
     tags=["memory", "profiler", "scan", "optimize", "performance"],
 )
-def run_memory_scan(scan_path: str = "/Game", **kwargs) -> dict:
+def run_memory_scan(scan_path: str = "", **kwargs) -> dict:
     """
     Scans all asset types and prints a summary dashboard.
     Full results saved to Saved/UEFN_Toolbelt/memory_report.json.
@@ -208,6 +208,7 @@ def run_memory_scan(scan_path: str = "/Game", **kwargs) -> dict:
     Returns:
         dict: {"status", "path", "summary": {counts, warnings, criticals}}
     """
+    scan_path = resolve_scan_path(scan_path)
     log_info(f"Memory scan: {scan_path} …")
 
     report: Dict = {
@@ -310,7 +311,7 @@ def run_memory_scan(scan_path: str = "/Game", **kwargs) -> dict:
     tags=["memory", "texture", "resolution", "optimize"],
 )
 def run_memory_scan_textures(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     max_size_px: int = 2048,
     **kwargs,
 ) -> dict:
@@ -323,6 +324,7 @@ def run_memory_scan_textures(
         dict: {"status", "count", "offenders": [{"path", "width", "height",
                "max_dim", "estimated_vram_kb", "severity"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     tex_assets = _list_assets_of_class(scan_path, "Texture2D")
     if not tex_assets:
         log_info("No Texture2D assets found.")
@@ -360,7 +362,7 @@ def run_memory_scan_textures(
     description="Audit all static meshes — polygon count, LODs, collision.",
     tags=["memory", "mesh", "lod", "polygon", "optimize"],
 )
-def run_memory_scan_meshes(scan_path: str = "/Game", **kwargs) -> dict:
+def run_memory_scan_meshes(scan_path: str = "", **kwargs) -> dict:
     """
     Args:
         scan_path: Content Browser folder to scan.
@@ -369,6 +371,7 @@ def run_memory_scan_meshes(scan_path: str = "/Game", **kwargs) -> dict:
         dict: {"status", "count", "offenders": [{"path", "lod_count",
                "approx_verts", "missing_lods", "severity"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     mesh_assets = _list_assets_of_class(scan_path, "StaticMesh")
     if not mesh_assets:
         log_info("No StaticMesh assets found.")
@@ -407,7 +410,7 @@ def run_memory_scan_meshes(scan_path: str = "/Game", **kwargs) -> dict:
     tags=["memory", "profiler", "top", "heaviest", "optimize"],
 )
 def run_memory_top_offenders(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     top_n: int = 10,
     **kwargs,
 ) -> dict:
@@ -419,6 +422,7 @@ def run_memory_top_offenders(
     Returns:
         dict: {"status", "textures": [{"path", ...}], "meshes": [{"path", ...}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     tex_assets = _list_assets_of_class(scan_path, "Texture2D")
     tex_sorted = sorted(
         [(p, _texture_info(a)) for p, a in tex_assets],
@@ -463,7 +467,7 @@ def run_memory_top_offenders(
     tags=["memory", "lod", "autofix", "optimize", "auto"],
 )
 def run_memory_autofix_lods(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     num_lods: int = 3,
     **kwargs,
 ) -> dict:
@@ -478,6 +482,7 @@ def run_memory_autofix_lods(
     Returns:
         dict: Passes through the structured return from lod_auto_generate_folder.
     """
+    scan_path = resolve_scan_path(scan_path)
     import UEFN_Toolbelt as tb
     result = tb.run("lod_auto_generate_folder",
                     folder_path=scan_path,

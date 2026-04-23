@@ -28,7 +28,7 @@ import re
 from collections import deque
 from typing import Optional, List, Dict, Set, Tuple, Any
 
-from ..core import log_info, log_warning, log_error, with_progress, load_asset
+from ..core import log_info, log_warning, log_error, with_progress, load_asset, resolve_scan_path
 from ..registry import register_tool
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ def _get_current_level_referenced_packages() -> Set[str]:
     tags=["organize", "smart", "category", "folder", "heuristic"]
 )
 def run_smart_categorize(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     organized_root: str = "/Game/Organized",
     dry_run: bool = True,
     include_unused: bool = True,
@@ -204,6 +204,7 @@ def run_smart_categorize(
         dry_run:        If True, only prints out the planned moves.
         include_unused: If False, ignores assets that aren't hooked into the current level.
     """
+    scan_path = resolve_scan_path(scan_path)
     eal = unreal.EditorAssetLibrary
     if not eal.does_directory_exist(scan_path):
         log_error(f"Scan path does not exist: {scan_path}")

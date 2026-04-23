@@ -37,6 +37,7 @@ from typing import Any
 import unreal
 
 from UEFN_Toolbelt.registry import register_tool
+from UEFN_Toolbelt.core import resolve_scan_path
 
 # ─── Output ───────────────────────────────────────────────────────────────────
 
@@ -363,7 +364,7 @@ def _print_summary(report: dict[str, Any]) -> None:
     tags=["reference", "orphan", "audit", "cleanup"],
 )
 def ref_audit_orphans(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     excluded_classes: list = None,
 **kwargs,
 ) -> dict:
@@ -377,6 +378,7 @@ def ref_audit_orphans(
     Returns:
         dict: {"status", "count", "orphans": [{"path", "class"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     excluded = excluded_classes or []
     orphans = _scan_orphans(scan_path, excluded)
 
@@ -399,7 +401,7 @@ def ref_audit_orphans(
     icon="↪",
     tags=["reference", "redirector", "audit", "cleanup"],
 )
-def ref_audit_redirectors(scan_path: str = "/Game", **kwargs) -> dict:
+def ref_audit_redirectors(scan_path: str = "", **kwargs) -> dict:
     """
     Print all ObjectRedirector assets under scan_path.
     These are silent performance drags — fix them with ref_fix_redirectors.
@@ -407,6 +409,7 @@ def ref_audit_redirectors(scan_path: str = "/Game", **kwargs) -> dict:
     Returns:
         dict: {"status", "count", "redirectors": [{"path", "class", "referencer_count"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     redirectors = _scan_redirectors(scan_path)
 
     if not redirectors:
@@ -428,7 +431,7 @@ def ref_audit_redirectors(scan_path: str = "/Game", **kwargs) -> dict:
     icon="⿻",
     tags=["reference", "duplicate", "naming", "audit"],
 )
-def ref_audit_duplicates(scan_path: str = "/Game", **kwargs) -> dict:
+def ref_audit_duplicates(scan_path: str = "", **kwargs) -> dict:
     """
     Find assets with the same base name living in different folders.
     Does NOT rename or delete anything.
@@ -436,6 +439,7 @@ def ref_audit_duplicates(scan_path: str = "/Game", **kwargs) -> dict:
     Returns:
         dict: {"status", "count", "duplicates": [{"base_name", "count", "paths"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     dupes = _scan_duplicates(scan_path)
 
     if not dupes:
@@ -457,13 +461,14 @@ def ref_audit_duplicates(scan_path: str = "/Game", **kwargs) -> dict:
     icon="🖼",
     tags=["reference", "texture", "unused", "cleanup"],
 )
-def ref_audit_unused_textures(scan_path: str = "/Game", **kwargs) -> dict:
+def ref_audit_unused_textures(scan_path: str = "", **kwargs) -> dict:
     """
     Find textures with zero referencers — prime deletion candidates.
 
     Returns:
         dict: {"status", "count", "textures": [{"path", "class"}]}
     """
+    scan_path = resolve_scan_path(scan_path)
     unused = _scan_unused_textures(scan_path)
 
     if not unused:
@@ -484,7 +489,7 @@ def ref_audit_unused_textures(scan_path: str = "/Game", **kwargs) -> dict:
     tags=["reference", "redirector", "fix", "consolidate"],
 )
 def ref_fix_redirectors(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     dry_run: bool = True,
 **kwargs,
 ) -> dict:
@@ -498,6 +503,7 @@ def ref_fix_redirectors(
     Returns:
         dict: {"status", "fixed", "dry_run"}
     """
+    scan_path = resolve_scan_path(scan_path)
     count = _fix_redirectors(scan_path, dry_run)
     if not dry_run and count:
         unreal.log(f"[RefAuditor] ✓ Fixed {count} redirectors.")
@@ -512,7 +518,7 @@ def ref_fix_redirectors(
     tags=["reference", "orphan", "delete", "cleanup"],
 )
 def ref_delete_orphans(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     dry_run: bool = True,
     excluded_classes: list = None,
 **kwargs,
@@ -530,6 +536,7 @@ def ref_delete_orphans(
     Returns:
         dict: {"status", "deleted", "dry_run"}
     """
+    scan_path = resolve_scan_path(scan_path)
     excluded = excluded_classes or []
     count = _delete_orphans(scan_path, dry_run, excluded)
     if not dry_run and count:
@@ -545,7 +552,7 @@ def ref_delete_orphans(
     tags=["reference", "report", "audit", "json"],
 )
 def ref_full_report(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     excluded_classes: list = None,
 **kwargs,
 ) -> dict:
@@ -559,6 +566,7 @@ def ref_full_report(
         dict: {"status", "path", "summary": {"orphaned_assets", "redirectors",
                "duplicate_names", "unused_textures"}}
     """
+    scan_path = resolve_scan_path(scan_path)
     excluded = excluded_classes or []
     unreal.log(f"[RefAuditor] Running full audit on {scan_path}…")
     report = _full_report(scan_path, excluded)

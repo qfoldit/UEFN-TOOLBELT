@@ -86,7 +86,7 @@ import unreal
 
 from ..core import (
     log_info, log_warning, log_error,
-    load_asset, ensure_folder, with_progress,
+    load_asset, ensure_folder, with_progress, resolve_scan_path,
 )
 from ..registry import register_tool
 
@@ -222,7 +222,7 @@ def _write_report(records: list, mode: str) -> str:
     tags=["rename", "convention", "dry-run", "epic", "prefix", "audit"],
 )
 def run_dry_run(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     class_filter: Optional[str] = None,
     **kwargs,
 ) -> dict:
@@ -234,6 +234,7 @@ def run_dry_run(
         scan_path:    Content Browser folder to scan (recursive).
         class_filter: Optional class name substring filter (e.g. "Texture2D").
     """
+    scan_path = resolve_scan_path(scan_path)
     log_info(f"Dry-run scan: {scan_path} …")
     entries = _scan_folder(scan_path, class_filter)
 
@@ -268,7 +269,7 @@ def run_dry_run(
     tags=["rename", "convention", "bulk", "epic", "prefix", "enforce"],
 )
 def run_enforce_conventions(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     class_filter: Optional[str] = None,
     dry_run: bool = False,
     **kwargs,
@@ -281,6 +282,7 @@ def run_enforce_conventions(
         class_filter: Only rename assets whose class name contains this string.
         dry_run:      If True, print changes without applying (safety override).
     """
+    scan_path = resolve_scan_path(scan_path)
     if dry_run:
         return run_dry_run(scan_path=scan_path, class_filter=class_filter)
 
@@ -327,7 +329,7 @@ def run_enforce_conventions(
     tags=["rename", "prefix", "strip", "bulk"],
 )
 def run_strip_prefix(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     prefix: str = "T_",
     dry_run: bool = True,
     **kwargs,
@@ -341,6 +343,7 @@ def run_strip_prefix(
         prefix:    The prefix string to strip (e.g. "T_", "SM_", "OLD_").
         dry_run:   If True, only print what would change.
     """
+    scan_path = resolve_scan_path(scan_path)
     asset_paths = unreal.EditorAssetLibrary.list_assets(
         scan_path, recursive=True, include_folder=False
     )
@@ -383,7 +386,7 @@ def run_strip_prefix(
     description="Generate a full naming convention audit report for a folder.",
     tags=["rename", "report", "audit", "convention", "scan"],
 )
-def run_rename_report(scan_path: str = "/Game", **kwargs) -> dict:
+def run_rename_report(scan_path: str = "", **kwargs) -> dict:
     """
     Full audit — doesn't rename anything, just writes a comprehensive JSON
     report to Saved/UEFN_Toolbelt/rename_report.json.
@@ -391,6 +394,7 @@ def run_rename_report(scan_path: str = "/Game", **kwargs) -> dict:
     Args:
         scan_path: Content Browser folder to audit.
     """
+    scan_path = resolve_scan_path(scan_path)
     log_info(f"Auditing {scan_path}…")
     entries = _scan_folder(scan_path)
 

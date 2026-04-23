@@ -38,7 +38,7 @@ import unreal
 
 from ..core import (
     get_selected_actors, log_info, log_warning, log_error,
-    load_asset, save_asset, undo_transaction, with_progress,
+    load_asset, save_asset, undo_transaction, with_progress, resolve_scan_path,
 )
 from ..registry import register_tool
 
@@ -318,7 +318,7 @@ def run_convert_to_hism(
     tags=["material", "optimization", "audit", "instances", "parent", "consolidate"],
 )
 def run_material_parent_audit(
-    scan_path: str = "/Game",
+    scan_path: str = "",
     **kwargs,
 ) -> dict:
     """
@@ -332,6 +332,7 @@ def run_material_parent_audit(
     Returns:
         dict with parent groups, orphan count, and consolidation suggestions.
     """
+    scan_path = resolve_scan_path(scan_path)
     try:
         asset_reg = unreal.AssetRegistryHelpers.get_asset_registry()
         filter_obj = unreal.ARFilter(
