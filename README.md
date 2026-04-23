@@ -2193,7 +2193,8 @@ All of these also appear in `deploy.bat` output — after deploying, just copy f
 | Scatter actors not visible | Check the mesh path is valid — tool falls back to `/Engine/BasicShapes/Cube` if it can't find the mesh. |
 | Something isn't loading after an update | Module may be cached. Paste: `import sys; [sys.modules.pop(k) for k in list(sys.modules) if "UEFN_Toolbelt" in k]; import UEFN_Toolbelt as tb; tb.launch_qt()` |
 | LOD generation fails | `StaticMeshEditorSubsystem.set_lods_with_notification` requires the mesh to be fully loaded. Run `load_asset()` first. |
-| Menu bar entry missing | `init_unreal.py` failed silently — check Output Log for `[TOOLBELT]` error lines on startup. |
+| Menu bar entry missing (UEFN ≤ 40.10) | `init_unreal.py` failed silently — check Output Log for `[TOOLBELT]` error lines on startup. |
+| Menu bar entry missing (UEFN 40.20+) | Known Epic platform restriction — `ToolMenus` extensions for third-party Python are sandboxed in 40.20. The Toolbelt menu will not appear regardless of configuration. Use `tb.launch_qt()` or the dashboard instead. All 358 tools and every other feature work normally. |
 
 ---
 
