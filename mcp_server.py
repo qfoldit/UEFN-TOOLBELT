@@ -209,10 +209,39 @@ def _detect_engine_version() -> str:
     return os.environ.get("QFOLDIT_ENGINE_VERSION", "UE5")
 
 
+def _qfoldit_asset_metadata_fn(asset_ref: str) -> dict | None:
+    """Resolve a candidate content path through the LIVE editor's own Asset
+    Registry — the same local IPC channel (_send) every other tool in this
+    file already uses, not a network call. Returns real provenance data or
+    None if the ref doesn't resolve to an actual asset.
+
+    plugin_id is derived from the asset's real package_path mount point
+    (e.g. '/LegoBrandContent/...' -> 'LegoBrandContent', '/Game/...' ->
+    'Game') since that's what the engine can actually tell us today via
+    get_asset_info/does_asset_exist. This is a real signal — brand template
+    plugins mount their content under their own root, distinct from your
+    project's /Game/ — but it is only as good as what license_manifest.json's
+    content_plugin_ids actually documents per brand. Fill those in from a
+    real Content Browser inspection before relying on plugin_id matches;
+    until then, TrustRuntime falls back to the namespace-prefix check.
+    """
+    try:
+        result = _send("get_asset_info", {"asset_path": asset_ref}, timeout=5)
+    except Exception:
+        return None
+    asset = (result or {}).get("asset")
+    if not asset:
+        return None
+    package_path = asset.get("package_path") or asset.get("object_path") or asset_ref
+    mount = package_path.strip("/").split("/", 1)[0] if package_path else ""
+    return {"resolved_path": package_path, "plugin_id": mount}
+
+
 _trust = TrustRuntime(
     manifest_path=os.path.join(_QFOLDIT_DIR, "license_manifest.json"),
     engine_version=_detect_engine_version(),
     audit_log_path=os.path.join(_QFOLDIT_DIR, "trust_audit.log.jsonl"),
+    asset_metadata_fn=_qfoldit_asset_metadata_fn,
 )
 _sci_registry = ScienceMCPRegistry(
     registry_path=os.path.join(_QFOLDIT_DIR, "science_mcp_registry.json"),
@@ -349,18 +378,38 @@ def qfoldit_connect_science_mcp(name: str, allow_best_effort: bool = False) -> s
 
 
 @mcp.tool()
-def qfoldit_evaluate_commission(task_description: str, task_type: str = "other") -> str:
+def qfoldit_evaluate_commission(
+    task_description: str,
+    task_type: str = "other",
+    sequence_length: int | None = None,
+    num_samples: int = 1,
+) -> str:
     """Gate a paid off-platform commission (L-system, drug-design,
     molecular/atomic structure, etc.) BEFORE accepting payment. Runs the
     same IP watchlist/manifest check used for UEFN calls, and flags if
     fulfilling it needs a metered paid backend (e.g. Boltz) so pricing can
-    account for real pass-through cost."""
-    d = _mon_registry.evaluate_commission(task_description, task_type=task_type)
+    account for real pass-through cost.
+
+    Pass sequence_length (residue count) for protein/drug-design commissions
+    to get a local, offline compute estimate from boltz_pricing.json. The
+    dollar figure is None until rate_usd_per_gpu_second is filled in there
+    from your real Modal billing — this never invents a price."""
+    d = _mon_registry.evaluate_commission(
+        task_description, task_type=task_type,
+        sequence_length=sequence_length, num_samples=num_samples,
+    )
     return json.dumps({
         "accepted": d.accepted,
         "reason": d.reason,
         "requires_paid_backend": d.requires_paid_backend,
         "backend_used": d.backend_used,
+        "cost_estimate": {
+            "estimated_seconds": d.cost_estimate.estimated_seconds,
+            "estimated_cost_usd": d.cost_estimate.estimated_cost_usd,
+            "gpu_type": d.cost_estimate.gpu_type,
+            "calibrated_from_real_runs": d.cost_estimate.calibrated_from_real_runs,
+            "note": d.cost_estimate.note,
+        } if d.cost_estimate else None,
     }, indent=2)
 
 

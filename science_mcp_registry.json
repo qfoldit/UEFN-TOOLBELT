@@ -1,0 +1,108 @@
+{
+  "_README": [
+    "Sourced 2026-08-02 from STATUS.md (this project's own ledger) plus the",
+    "connectors actually available in this session. Statuses reflect what",
+    "was genuinely tested/verified, not aspiration — copy STATUS.md's own",
+    "honesty here rather than upgrading anything's status without re-testing."
+  ],
+  "protein_design_mcp": {
+    "name": "Protein-Design-MCP",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["protein design", "PyRosetta/Boltz-2 folding", "ZairaChem QSAR", "quantum-VQE folding", "OpenUSD export", "gamification hooks"],
+    "source": "github.com/qfoldit/Protein-Design-MCP",
+    "requires_credentials": false,
+    "notes": "30 tools, first-party, tested end-to-end per STATUS.md."
+  },
+  "protein_mcp_upstream": {
+    "name": "ProteinMCP",
+    "provider": "charlesxu90 (upstream)",
+    "license": "see upstream repo",
+    "status": "best_effort",
+    "capabilities": ["agentic autonomous protein engineering framework"],
+    "source": "github.com/charlesxu90/ProteinMCP",
+    "requires_credentials": false,
+    "notes": "Upstream dependency, not independently re-verified by qFoldIT."
+  },
+  "protein_design_mcp_upstream": {
+    "name": "protein-design-mcp",
+    "provider": "jasonkim8652 (upstream)",
+    "license": "see upstream repo",
+    "status": "best_effort",
+    "capabilities": ["19 base protein design tools"],
+    "source": "github.com/jasonkim8652/protein-design-mcp",
+    "requires_credentials": false,
+    "notes": "Upstream dependency, not independently re-verified by qFoldIT."
+  },
+  "uefn_toolbelt": {
+    "name": "UEFN-TOOLBELT",
+    "provider": "undergroundrap",
+    "license": "AGPL-3.0 (mandatory attribution)",
+    "status": "connected",
+    "capabilities": ["358 UEFN editor control tools", "run_toolbelt_tool dispatcher", "execute_python arbitrary code bridge"],
+    "source": "github.com/undergroundrap/UEFN-TOOLBELT",
+    "requires_credentials": false,
+    "notes": "The runtime this Trust Runtime is designed to wrap. AGPL-3.0 means any distributed derivative must stay AGPL-3.0 with attribution."
+  },
+  "uefn_mcp_server_kirchuvakov": {
+    "name": "uefn-mcp-server",
+    "provider": "KirChuvakov",
+    "license": "MIT",
+    "status": "best_effort",
+    "capabilities": ["community UEFN bridge — actor/scene control"],
+    "source": "github.com/KirChuvakov/uefn-mcp-server",
+    "requires_credentials": false,
+    "notes": "Community bridge, functionally reachable but not independently verified end-to-end."
+  },
+  "uefn_verse_mcp_quangdang46": {
+    "name": "uefn-verse-mcp",
+    "provider": "quangdang46",
+    "license": "AGPL-3.0 (mandatory attribution)",
+    "status": "best_effort",
+    "capabilities": ["community UEFN bridge — Verse-oriented"],
+    "source": "github.com/quangdang46/uefn-verse-mcp",
+    "requires_credentials": false,
+    "notes": "Tool signatures not fully verified as of last check — confirm before relying on specific call shapes."
+  },
+  "unity_mcp_server": {
+    "name": "Unity MCP Server",
+    "provider": "community",
+    "license": "see upstream repo",
+    "status": "reference_only",
+    "capabilities": ["Unity scene/editor control (documented, not runnable here)"],
+    "source": "see qfoldit-universal-digital-twin:unity-experience-builder skill",
+    "requires_credentials": false,
+    "notes": "Reference/instruction only — no live Unity editor reachable from this environment."
+  },
+  "unigine_mcpbridge": {
+    "name": "UNIGINE MCPBridge",
+    "provider": "community",
+    "license": "see upstream repo",
+    "status": "reference_only",
+    "capabilities": ["UNIGINE 2 / UNIGINE 2 Sim simulation control (documented, not runnable here)"],
+    "source": "see qfoldit-universal-digital-twin:unigine-simulation-engineer skill",
+    "requires_credentials": false,
+    "notes": "Reference/instruction only."
+  },
+  "kit_usd_agents": {
+    "name": "kit-usd-agents",
+    "provider": "NVIDIA / community",
+    "license": "see upstream repo",
+    "status": "reference_only",
+    "capabilities": ["Omniverse/Kit/USD scene agent control (documented, not runnable here)"],
+    "source": "see qfoldit-universal-digital-twin:openusd-architect skill",
+    "requires_credentials": false,
+    "notes": "Reference/instruction only."
+  },
+  "boltz_api": {
+    "name": "Boltz API",
+    "provider": "Boltz Bio",
+    "license": "proprietary hosted API",
+    "status": "connected",
+    "capabilities": ["AlphaFold-class structure prediction", "protein/small-molecule design", "library screening", "ADME prediction", "docking estimates", "share-link based collaboration"],
+    "source": "mcp.boltz.bio/mcp",
+    "requires_credentials": true,
+    "notes": "Actually connected and OAuth-authorized in this session — paid runs, so gate any auto-triggered call behind an explicit cost estimate step (boltz_estimate_*) before boltz_start_*."
+  }
+}

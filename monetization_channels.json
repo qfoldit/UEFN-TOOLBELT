@@ -1,0 +1,53 @@
+{
+  "_README": [
+    "Fortnite-native figures sourced 2026-08-02 from dev.epicgames.com and",
+    "Epic's own news posts. Off-platform commission channel is qFoldIT's",
+    "own — not an Epic mechanism, documented here only so it lives next to",
+    "everything else and goes through the same compliance gate."
+  ],
+  "engagement_payout": {
+    "name": "Engagement Payout",
+    "channel_type": "fortnite_native",
+    "mechanism": "40% of eligible net Fortnite Item Shop / real-money revenue, plus 50% of Sponsored Row sponsorship revenue (100% of the sponsorship share through end of 2026), pooled monthly and split across all published islands by engagement metrics (retention, time played) for players who've made a real-money purchase.",
+    "revenue_split": "Pool-based, proportional to your island's share of qualifying engagement — not a fixed per-creator %.",
+    "source": "https://dev.epicgames.com/documentation/fortnite/engagement-payout-in-fortnite-creative",
+    "status": "active",
+    "notes": "Brand islands (LEGO/TMNT/Squid Game/etc.) have their partner royalty (15% where confirmed) deducted from this payout automatically by Epic — see license_manifest.json for per-brand rates."
+  },
+  "in_island_transactions": {
+    "name": "In-Island Transactions",
+    "channel_type": "fortnite_native",
+    "mechanism": "Direct sale of durable/consumable items to players inside your own island, paid in V-Bucks.",
+    "revenue_split": "100% of V-Bucks value to the creator from launch (Jan 9, 2026) through Jan 31, 2027; 50% from Feb 1, 2027 onward.",
+    "source": "https://www.fortnite.com/news/tools-for-in-island-transactions-now-available-to-fortnite-developers",
+    "status": "active",
+    "notes": "Newest major channel — layered on top of Engagement Payout, not a replacement for it."
+  },
+  "sponsored_row": {
+    "name": "Sponsored Row",
+    "channel_type": "fortnite_native",
+    "mechanism": "Pay for visibility placement in Fortnite's Discover marketplace row.",
+    "revenue_split": "This is a cost to the creator (ad spend), not direct income — 50% of what Epic collects from Sponsored Row campaigns is redirected into the shared Engagement Payout pool.",
+    "source": "https://dev.epicgames.com/documentation/fortnite/engagement-payout-in-fortnite-creative",
+    "status": "active",
+    "notes": "Comes with its own Sponsored Row Content Rules — check before using."
+  },
+  "brand_island_royalty": {
+    "name": "Brand Island Royalty Split",
+    "channel_type": "fortnite_native",
+    "mechanism": "Automatic deduction from Engagement Payout for islands built with an IP Partner brand (LEGO, TMNT, Squid Game confirmed 15%; Walking Dead/KPop Demon Hunters/Star Wars — rate not independently confirmed, check live page).",
+    "revenue_split": "See license_manifest.json per-brand royalty_pct field.",
+    "source": "see license_manifest.json entries",
+    "status": "active",
+    "notes": "Not a separate income stream — it's a deduction applied to Engagement Payout for that specific island."
+  },
+  "off_platform_commission": {
+    "name": "Off-Platform Science Commissions (\"Cameo-style\")",
+    "channel_type": "off_platform_commission",
+    "mechanism": "A partner/customer pays qFoldIT directly (outside Fortnite/UEFN entirely) for a custom generated output — an L-system procedural plant, a drug-design candidate, a molecular/atomic structure model — delivered via your own storefront/API. Not an Epic mechanism.",
+    "revenue_split": "Whatever pricing model you set — but must subtract real pass-through cost for any metered backend call (e.g. Boltz API paid runs) used to fulfill the task.",
+    "source": "internal — no external policy governs this, which is exactly why it needs its own compliance gate (see qfoldit_monetization_registry.py: evaluate_commission).",
+    "status": "active",
+    "notes": "Every commission request must pass the same IP watchlist/manifest check as any other flagged call before being accepted — a customer asking for a trademarked character's likeness gets the same default-deny treatment as a UEFN tool call would."
+  }
+}

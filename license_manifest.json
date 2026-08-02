@@ -1,0 +1,133 @@
+{
+  "_README": [
+    "Seeded 2026-08-02 from Epic's official 'Game Collections' page",
+    "(https://dev.epicgames.com/documentation/en-us/fortnite/game-collections-in-fortnite),",
+    "which is the authoritative, exhaustive list of third-party brand islands",
+    "available to any UEFN creator through the IP Partner Licensing Agreement.",
+    "",
+    "CONFIRMED FULL LIST (as of 2026-08-02): STAR WARS, KPop Demon Hunters,",
+    "LEGO, Squid Game, The Walking Dead Universe, TMNT, Fall Guys (Epic-owned,",
+    "not third-party), Rocket Racing (Epic-owned, not third-party).",
+    "",
+    "NOT on this list: Marvel, DC, classic Disney (Pixar/Incredibles/etc.),",
+    "The Simpsons, Futurama, Rick and Morty, anime franchises, or any Icon",
+    "Series real-person likeness. These stay blocked by default — no Game",
+    "Collections page exists for them, meaning no general creator license",
+    "flows to third-party UEFN developers for them.",
+    "",
+    "Every entry below documents conditions taken from the brand's own",
+    "Brand Rules page — not invented. Royalty % is only filled in where a",
+    "primary or clearly-sourced secondary source states it explicitly.",
+    "'null' means: real license confirmed, but this specific number was not",
+    "found in what was fetched — check the live Brand Rules page before",
+    "relying on it, don't assume a figure."
+  ],
+  "lego": {
+    "rightsholder": "LEGO Group (via Epic Games IP Partner Licensing Agreement)",
+    "scope": "LEGO-branded islands built from official LEGO templates only",
+    "verification_source": "https://dev.epicgames.com/documentation/fortnite/lego-brand-rules-in-fortnite",
+    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": 15.0,
+    "monetization_scope": "Within Fortnite only, LEGO-provided content only",
+    "rules": [
+      "Only approved LEGO assets/features accessed through designated templates are usable — no custom LEGO meshes.",
+      "LEGO assets are scaled to Minifigure size and cannot be resized.",
+      "LEGO wordmark/trademark use in island description is restricted per Brand Rules section 4.",
+      "Cannot use third-party IP in a LEGO island's thumbnail, even if that IP already has a LEGO style elsewhere in Fortnite.",
+      "As of UEFN 36.10, you can build/test with LEGO templates without signing the IP Partner Licensing Agreement first, but must sign it before publishing."
+    ]
+  },
+  "tmnt": {
+    "rightsholder": "Paramount Global / Nickelodeon (via Epic Games IP Partner Licensing Agreement)",
+    "scope": "TMNT-branded islands built from official TMNT templates only",
+    "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/tmnt-brand-and-creator-rules-in-unreal-editor-for-fortnite",
+    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": 15.0,
+    "monetization_scope": "Within Fortnite only, TMNT-provided content only",
+    "rules": [
+      "Do not import any TMNT characters or assets into UEFN — only the ones provided in-editor.",
+      "Cannot sell or redistribute TMNT assets.",
+      "Cannot mix TMNT assets with other third-party IP, even if that other IP owner consents.",
+      "Repeated violations lose access to TMNT templates; continued violation risks account restrictions."
+    ]
+  },
+  "the walking dead": {
+    "rightsholder": "Skybound/AMC (via Epic Games IP Partner Licensing Agreement)",
+    "scope": "The Walking Dead Universe (TWDU) islands built from official TWDU templates only",
+    "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/the-walking-dead-universe-brand-rules-in-fortnite",
+    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": null,
+    "monetization_scope": "Within Fortnite only, TWDU-provided content only",
+    "rules": [
+      "Only use TWDU assets in TWDU islands — this restriction applies specifically to Walking Dead franchise assets.",
+      "Royalty percentage not confirmed from the excerpt fetched — verify the exact figure on the live Brand Rules page before publishing."
+    ]
+  },
+  "squid game": {
+    "rightsholder": "Netflix (via Epic Games IP Partner Licensing Agreement)",
+    "scope": "Squid Game islands built from official Squid Game templates only",
+    "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/squid-game-brand-and-creator-rules-in-fortnite",
+    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": 15.0,
+    "monetization_scope": "Within Fortnite only, Squid Game-provided content only",
+    "rules": [
+      "Requires Island Creator Program membership plus a separate opt-in to Squid Game terms in Creator Portal.",
+      "Once a project's brand type is set, it can't be changed.",
+      "Brand-type conversion has a 30-day cooldown before reverting to a non-brand island."
+    ]
+  },
+  "kpop demon hunters": {
+    "rightsholder": "Netflix / Sony Pictures Animation (via Epic Games IP Partner Licensing Agreement)",
+    "scope": "KPop Demon Hunters islands built from official templates only",
+    "verification_source": "https://dev.epicgames.com/documentation/fortnite/kpop-demon-hunters-brand-rules-in-fortnite",
+    "verified_by": "checked against Epic's live Game Collections page, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": null,
+    "monetization_scope": "Within Fortnite only, presumed by pattern — verify on live Brand Rules page",
+    "rules": [
+      "Confirmed as a real Game Collections brand; specific Brand Rules text not independently fetched — verify condition details on the live page before relying on them."
+    ]
+  },
+  "star wars": {
+    "rightsholder": "Disney / Lucasfilm (via Epic Games IP Partner Licensing Agreement — Star Wars specifically, NOT a blanket Disney/Marvel license)",
+    "scope": "Star Wars islands using Epic-provided Star Wars characters and Background Assets only",
+    "verification_source": "https://dev.epicgames.com/documentation/fortnite/star-wars-brand-rules-in-fortnite",
+    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_date": "2026-08-02",
+    "engine_versions_verified": ["UE5"],
+    "review_due": "2026-11-02",
+    "template_only": true,
+    "no_mixing_other_ip": true,
+    "royalty_pct": null,
+    "monetization_scope": "Within Fortnite only",
+    "rules": [
+      "You must own/have rights to any additional content you add, sufficient to grant Epic its required license.",
+      "Can combine with Epic-provided assets not tied to another IP Partner Program brand, subject to those assets' own terms.",
+      "IMPORTANT SCOPE NOTE: this entry covers Star Wars only. It does NOT extend to Marvel, DC, or any other Disney/WBD property — those have no equivalent Game Collections page as of this verification and remain blocked."
+    ]
+  }
+}

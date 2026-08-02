@@ -1,0 +1,29 @@
+{
+  "_README": [
+    "Local, offline pricing model for the Boltz-2 backend (run via Modal GPU",
+    "deployment per modal_proxy.py) — deliberately NOT a live API call. This",
+    "repo's own Security section guarantees zero outbound network calls",
+    "anywhere in the codebase, so pricing has to come from a local rate table",
+    "you fill in from your real Modal billing dashboard, not a fetch at",
+    "runtime.",
+    "",
+    "'rate_usd_per_gpu_second' is null on purpose — nobody should ship a",
+    "guessed dollar figure. Get the real number from your Modal account",
+    "(Settings -> Usage/Billing, or the per-GPU-type rate on modal.com/pricing",
+    "for whatever GPU class your deployment targets) and fill it in. Until",
+    "then, evaluate_boltz_cost() returns estimated_seconds but",
+    "estimated_cost_usd: null, and callers must treat that as 'pricing not",
+    "yet configured', never as 'free'.",
+    "",
+    "'baseline_seconds_per_100_residues' and 'overhead_seconds' are rough",
+    "starting points, not measured — replace them the first time you time a",
+    "handful of real Boltz runs end-to-end (modal logs show wall-clock GPU",
+    "time per call) and this file's calibration will actually mean something."
+  ],
+  "gpu_type": null,
+  "rate_usd_per_gpu_second": null,
+  "baseline_seconds_per_100_residues": 45,
+  "overhead_seconds": 20,
+  "calibrated_from_real_runs": false,
+  "last_updated": "2026-08-02"
+}

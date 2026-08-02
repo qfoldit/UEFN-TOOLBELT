@@ -87,3 +87,4 @@ from . import blueprint_tools
 from . import landscape_tools
 from . import sound_asset_tools
 from . import physics_tools
+from . import qfoldit_trust_dashboard
