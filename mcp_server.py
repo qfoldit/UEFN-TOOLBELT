@@ -41,7 +41,19 @@ What this exposes (beyond Kirch's original 22 tools):
     list_toolbelt_tools — list every available tool with category and description
     mcp_get_log         — read the last N lines of the MCP listener log ring
 
+qFoldIT Trust & Compliance integration (2026-08):
+    run_toolbelt_tool and execute_python are now gated by qfoldit_trust_runtime
+    before anything reaches the UEFN editor — default-deny on watchlisted
+    brand/IP terms unless a real, sourced license_manifest.json entry (or an
+    Epic-owned content namespace reference) covers them. See README.md /
+    INTEGRATION.md in this repo for the full design and its known limits.
+        qfoldit_check_license        — look up documented terms for a brand/IP
+        qfoldit_list_licensed_brands — list everything currently covered
+        qfoldit_connect_science_mcp  — gate connecting a scientific MCP server
+        qfoldit_evaluate_commission  — gate a paid off-platform commission
+
 Author: Ocean Bennett
+qFoldIT integration merged with the original author now on the team.
 License: AGPL-3.0 with visible attribution requirement (see LICENSE)
 """
 
@@ -57,6 +69,10 @@ import urllib.request
 from typing import Any, Optional
 
 from mcp.server.fastmcp import FastMCP
+
+from qfoldit_trust_runtime import TrustRuntime
+from qfoldit_science_mcp_registry import ScienceMCPRegistry
+from qfoldit_monetization_registry import MonetizationRegistry
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -171,6 +187,44 @@ def _j(obj: Any) -> str:
     return json.dumps(obj, indent=2)
 
 
+# ─── qFoldIT Trust & Compliance Runtime ────────────────────────────────────────
+
+_QFOLDIT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _detect_engine_version() -> str:
+    """Best-effort read of the current engine version from the live UEFN
+    listener (so manifest staleness checks track the real editor, not a
+    hardcoded config value). Falls back to QFOLDIT_ENGINE_VERSION env var,
+    then to 'UE5' — never raises, since this runs at import time before
+    the listener may even be up yet."""
+    try:
+        result = _send("ping")
+        for key in ("engine_version", "unreal_version", "ue_version"):
+            if result.get(key):
+                v = str(result[key])
+                return "UE6" if v.startswith("6") else "UE5" if v.startswith("5") else v
+    except Exception:
+        pass
+    return os.environ.get("QFOLDIT_ENGINE_VERSION", "UE5")
+
+
+_trust = TrustRuntime(
+    manifest_path=os.path.join(_QFOLDIT_DIR, "license_manifest.json"),
+    engine_version=_detect_engine_version(),
+    audit_log_path=os.path.join(_QFOLDIT_DIR, "trust_audit.log.jsonl"),
+)
+_sci_registry = ScienceMCPRegistry(
+    registry_path=os.path.join(_QFOLDIT_DIR, "science_mcp_registry.json"),
+    connection_log_path=os.path.join(_QFOLDIT_DIR, "science_mcp_connections.log.jsonl"),
+)
+_mon_registry = MonetizationRegistry(
+    channels_path=os.path.join(_QFOLDIT_DIR, "monetization_channels.json"),
+    commission_log_path=os.path.join(_QFOLDIT_DIR, "commission_ledger.log.jsonl"),
+    trust=_trust,
+)
+
+
 # ─── FastMCP server ───────────────────────────────────────────────────────────
 
 mcp = FastMCP(
@@ -230,8 +284,15 @@ def execute_python(code: str) -> str:
         # Run a toolbelt tool programmatically
         tb.run('material_apply_preset', preset='chrome')
     """
+    decision = _trust.evaluate(tool_name="execute_python", kwargs={"code": code})
+    if not decision.allowed:
+        return _trust.deny_response(decision)
+
     result = _send("execute_python", {"code": code}, timeout=LONG_OPERATION_TIMEOUT)
     parts = []
+    note = _trust.allow_response_note(decision)
+    if note:
+        parts.append(note)
     if result.get("stdout"):
         parts.append(f"stdout:\n{result['stdout'].rstrip()}")
     if result.get("stderr"):
@@ -247,6 +308,60 @@ def mcp_get_log(last_n: int = 50) -> str:
     result = _send("get_log", {"last_n": last_n})
     lines = result.get("lines", [])
     return "\n".join(lines) if lines else "(log is empty)"
+
+
+# ─── qFoldIT Trust & Compliance ─────────────────────────────────────────────
+
+
+@mcp.tool()
+def qfoldit_check_license(term: str) -> str:
+    """Look up what's actually documented for a brand/IP term before you
+    build with it — e.g. qfoldit_check_license("lego") shows the real
+    royalty %, template-only restriction, and source link from Epic's
+    Brand Rules. Returns 'no manifest entry' for anything not licensed
+    (Marvel, DC, Rick and Morty, etc.) — that means it stays blocked in
+    execute_python / run_toolbelt_tool regardless of how it's phrased.
+    """
+    return _trust.describe(term)
+
+
+@mcp.tool()
+def qfoldit_list_licensed_brands() -> str:
+    """List every brand currently covered by a real license_manifest.json
+    entry, with rightsholder and license_type. Anything not on this list
+    has no general creator license and is blocked by default."""
+    lines = []
+    for term, entry in _trust.manifest.items():
+        lines.append(f"{term}: {entry.rightsholder} ({entry.license_type})")
+    return "\n".join(lines) if lines else "(manifest is empty — everything watchlisted is blocked)"
+
+
+@mcp.tool()
+def qfoldit_connect_science_mcp(name: str, allow_best_effort: bool = False) -> str:
+    """Check/record whether a scientific MCP server (protein design, Boltz,
+    engine bridges, etc.) is safe to connect right now. 'verified' and
+    'connected' servers pass immediately; 'best_effort' community bridges
+    need allow_best_effort=True; 'reference_only' entries never connect
+    (there's nothing live to reach)."""
+    ok, reason = _sci_registry.can_connect(name, allow_best_effort=allow_best_effort)
+    _sci_registry._log_connection(name, ok, reason)
+    return json.dumps({"server": name, "connectable": ok, "reason": reason}, indent=2)
+
+
+@mcp.tool()
+def qfoldit_evaluate_commission(task_description: str, task_type: str = "other") -> str:
+    """Gate a paid off-platform commission (L-system, drug-design,
+    molecular/atomic structure, etc.) BEFORE accepting payment. Runs the
+    same IP watchlist/manifest check used for UEFN calls, and flags if
+    fulfilling it needs a metered paid backend (e.g. Boltz) so pricing can
+    account for real pass-through cost."""
+    d = _mon_registry.evaluate_commission(task_description, task_type=task_type)
+    return json.dumps({
+        "accepted": d.accepted,
+        "reason": d.reason,
+        "requires_paid_backend": d.requires_paid_backend,
+        "backend_used": d.backend_used,
+    }, indent=2)
 
 
 # ─── Toolbelt bridge (the killer feature) ─────────────────────────────────────
@@ -275,12 +390,17 @@ def run_toolbelt_tool(tool_name: str, kwargs: dict | None = None) -> str:
 
     Use list_toolbelt_tools() first to discover available tool names.
     """
+    decision = _trust.evaluate(tool_name=tool_name, kwargs=kwargs or {})
+    if not decision.allowed:
+        return _trust.deny_response(decision)
+
     result = _send(
         "run_tool",
         {"tool_name": tool_name, "kwargs": kwargs or {}},
         timeout=LONG_OPERATION_TIMEOUT,
     )
-    return _j(result)
+    note = _trust.allow_response_note(decision)
+    return (note + "\n\n" + _j(result)) if note else _j(result)
 
 
 @mcp.tool()
