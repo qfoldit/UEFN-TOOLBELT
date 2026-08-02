@@ -160,7 +160,6 @@ Toolbelt is built to be used with AI (Claude/Gemini). To give your AI **perfect 
 - [Getting Started](#getting-started)
 - [Adding a New Tool](#adding-a-new-tool)
 - [Custom Plugins & Security](#custom-plugins--security)
-- [qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer)
 - [API Capability Crawler](#api-capability-crawler)
 - [Fortnite Device API Mapping](#fortnite-device-api-mapping)
 - [MCP — Connect Any AI to UEFN](#mcp--connect-any-ai-to-uefn)
@@ -214,54 +213,113 @@ with open("path/to/script.py") as f:
 
 ---
 
-## qFoldIT Trust & Compliance Layer
+## qFoldIT Trust & Compliance Runtime
 
-> Merged from the [qFoldIT](https://github.com/qfoldit) team — a default-deny gate that sits in
-> front of `run_toolbelt_tool` and `execute_python` in `mcp_server.py`, so that generation/import
-> calls involving third-party brand IP (LEGO, TMNT, Star Wars, The Walking Dead Universe, Squid
-> Game, KPop Demon Hunters, and others) can't slip past this repo's own compliance requirements —
-> for authorized creators, and enforced the same way against any MCP server that connects.
+> **What this adds:** `mcp_server.py`'s two dispatch points (`run_toolbelt_tool`,
+> `execute_python`) are gated by `qfoldit_trust_runtime.py` before anything
+> reaches the UEFN editor — default-deny on watchlisted brand/IP terms
+> (Marvel, DC, Rick and Morty, real-person likeness, etc.) unless a real,
+> sourced `license_manifest.json` entry covers them, or the reference is
+> confirmed to be an Epic-owned content namespace.
 
-**Files:** `qfoldit_trust_runtime.py` · `qfoldit_science_mcp_registry.py` · `qfoldit_monetization_registry.py` ·
-`license_manifest.json` · `science_mcp_registry.json` · `monetization_channels.json` · `boltz_pricing.json`
-(all at repo root, next to `mcp_server.py`) · `tests/test_qfoldit_*.py` (24 tests, run with plain `python3`)
+### What's actually licensed right now
 
-### What it actually does
+Sourced from Epic's own **Game Collections** page — the authoritative list
+of third-party brand islands available to any UEFN creator:
 
-| Layer | Question it answers | How |
-|---|---|---|
-| **IP Trust Gate** | "Is this asset call actually licensed?" | Default-deny watchlist match → requires a real, dated `license_manifest.json` entry, not just presence in the project |
-| **Provenance verification** | "Did this asset really come from where the call claims?" | When an `asset_metadata_fn` is wired to the live editor (via the existing `get_asset_info` IPC command — no network call), path claims are checked against the engine's own Asset Registry, not trusted as text. A path that *looks* Epic-native but resolves somewhere else is blocked as a spoofing attempt, not silently allowed |
-| **Science MCP Registry** | "Is this connected MCP server safe/stable enough to auto-run?" | `verified` / `connected` auto-connect; `best_effort` requires an explicit opt-in; `reference_only` never auto-connects |
-| **Monetization Gate** | "Can we accept payment for this commission, and what will it cost us?" | Off-platform ("Cameo-style") commissions run through the same IP watchlist before payment; Boltz-backed requests get a **local, offline** compute-time estimate from `boltz_pricing.json` — no dollar figure is ever fabricated: `rate_usd_per_gpu_second` ships as `null` until you fill it in from your real Modal billing dashboard |
-| **Dashboard visibility** | "What has the gate actually blocked/allowed/priced?" | `qfoldit_trust_dashboard` tool (category: Dashboard) — read-only panel summarizing the audit log, licensed brands, and commission ledger |
+| Brand | Rightsholder | Royalty | Template-only | In-island transactions |
+|---|---|---|---|---|
+| LEGO | LEGO Group | 15% | ✅ | ✅ supported |
+| TMNT | Paramount / Nickelodeon | 15% | ✅ | ✅ supported |
+| Squid Game | Netflix | 15% | ✅ | ✅ supported |
+| The Walking Dead Universe | Skybound/AMC | 12% | ✅ | ❌ not supported |
+| KPop Demon Hunters | Netflix / Sony | 15% | ✅ | ❌ not supported |
+| Star Wars | Disney/Lucasfilm — **Star Wars only** | 20% | ✅ | ❌ not supported |
 
-### Why provenance checking matters here
+Marvel, DC, classic Disney, Simpsons, Rick and Morty, anime, and Icon
+Series real-person likeness are **not** on this list and stay blocked by
+default — no Game Collections page exists for them, meaning no general
+creator license flows to third-party UEFN developers.
 
-A text match alone (`"lego" in payload`) can't tell a genuine LEGO-template asset from a custom
-import that merely mentions the word "lego" in a variable name. `TrustRuntime.verify_asset_provenance()`
-closes that gap when wired to the live engine: every path-like reference in a call's arguments is
-resolved through the real Asset Registry, and the **engine's answer always overrides the text's
-claim**. Manifest entries additionally support `content_plugin_ids` — the real plugin/content-pack
-identifier(s) the engine reports for a brand's genuine template assets — for an even tighter check
-than namespace prefixes alone. These start empty (`[]`) per brand; fill them in from a real Content
-Browser inspection, they are never guessed.
+### Three layers, three questions
 
-### Boltz commission pricing — honest by construction
+| Module | Question it answers |
+|---|---|
+| `qfoldit_trust_runtime.py` | Is this brand/IP asset actually licensed for you to use? |
+| `qfoldit_science_mcp_registry.py` | Is this scientific MCP server (protein design, Boltz, engine bridges) stable enough to auto-connect? |
+| `qfoldit_monetization_registry.py` | What monetization channel applies, and — for off-platform commissions — what's the real price? |
 
-This repo's own [Security](#security) guarantees zero outbound network calls anywhere in the
-codebase, so commission pricing can't be a live API lookup either. `estimate_boltz_cost()` computes
-a compute-time estimate locally from sequence length and a rate table in `boltz_pricing.json`. Until
-`rate_usd_per_gpu_second` is filled in from your actual Modal billing, `qfoldit_evaluate_commission`
-returns `estimated_cost_usd: null` — never a made-up number, and never silently treated as free.
+### Real asset-provenance verification (not just name matching)
 
-### Running the qFoldIT tests
+A watchlisted term matching Epic's own namespace prefix (`/FortniteGame/`,
+`/EpicContent/`, `/Engine/`) used to be trusted on the string alone — which
+meant a decoy path like `/FortniteGame/definitely_not_real_batman` could
+slip through. `mcp_server.py` now wires an `asset_prober` into the trust
+runtime that calls `unreal.EditorAssetLibrary.does_asset_exist()` **inside
+the live editor** before granting that bypass. Fails closed: if the editor
+can't be reached, the bypass is not granted and the call falls back to
+requiring a real `license_manifest.json` entry instead.
 
-```bash
-python3 tests/test_qfoldit_trust_runtime.py         # 16/16 — includes engine-provenance cases
-python3 tests/test_qfoldit_science_mcp_registry.py  # 7/7
-python3 tests/test_qfoldit_monetization_registry.py # 8/8 — includes Boltz pricing cases
-```
+### Commission pricing from a real cost estimate
+
+`qfoldit_evaluate_commission` (exposed as an MCP tool) checks a paid
+off-platform commission (L-system, drug-design, molecular/atomic
+structure) against the same watchlist, and — when it needs a metered
+Boltz backend call — returns a real `estimated_cost_usd` and
+`suggested_price_usd` (with markup) instead of just a flag. Ships with a
+clearly-labeled **mock** estimator for dev/test; wiring a real one means
+pointing `boltz_estimator=` at your own authenticated Boltz client — see
+`qfoldit_boltz_mock_estimator.py` for the exact contract.
+
+### Watchlist extensions — scientific equipment & vehicles
+
+Two more categories live in `watchlist_scientific_equipment.json` and
+`watchlist_vehicles.json` — real manufacturer brands (Thermo Fisher,
+Agilent, Illumina, Tesla, Caterpillar, Scania, Архант/Sherp, etc.) with
+**zero** relationship to Epic's IP Partner Licensing Agreement. These are
+watchlist-only: no manifest entries exist for any of them, so every
+match is blocked by default until a real license is added — same rule
+as everything else. Loaded via `load_watchlist_extension()` and merged
+into the trust runtime's watchlist in `mcp_server.py`.
+
+Because several of these are short, common-looking words (Ford, IKA),
+the matcher was upgraded from raw substring to **token-boundary
+matching** (with camelCase-aware splitting) — `"ford"` no longer
+false-triggers inside `"affordable_bench_mesh"`, while still catching
+`Ford_F150_mesh`, `FordF150Mesh`, or `ford-f150`. Verified on the real
+`mcp_server.py`: Tesla/Caterpillar/Thermo Fisher meshes block correctly,
+generic unrelated props pass, and the Ford false-positive case is gone.
+
+
+
+The PySide6 dashboard (`Content/Python/UEFN_Toolbelt/dashboard_pyside6.py`)
+has a **Trust** tab in the sidebar: live counts of allowed/blocked calls,
+which allows were provenance-verified vs. trusted-on-prefix-only, recent
+commission pricing, and scientific-MCP connection status — all read
+directly from the `.log.jsonl` files `mcp_server.py` already writes, with
+a configurable repo-root path (auto-detected, overridable via Browse…).
+
+### Files
+
+`qfoldit_trust_runtime.py` · `qfoldit_science_mcp_registry.py` ·
+`qfoldit_monetization_registry.py` · `qfoldit_boltz_mock_estimator.py` ·
+`license_manifest.json` · `science_mcp_registry.json` ·
+`monetization_channels.json` · `watchlist_scientific_equipment.json` ·
+`watchlist_vehicles.json` · `tests/test_qfoldit_*.py` (16 + 8 + 7 = 31
+automated tests — run with plain `python3`, no UEFN editor needed).
+
+### Known limitations
+
+- Watchlist matching is token-boundary (with camelCase splitting), which
+  fixed short-name false positives (e.g. "ford" inside "affordable") —
+  but it's still not semantic: no stemming, no typo tolerance, no
+  non-Latin-script transliteration yet.
+- Asset-provenance verification confirms the path **exists**; it doesn't
+  yet inspect which plugin/package actually owns it — a reasonable next
+  hardening step.
+- Not legal advice. A technical guard against accidental/silent misuse,
+  backed by an audit trail — not a substitute for an actual read of the
+  current Brand Rules page or, for anything off this list, a lawyer.
 
 ---
 
@@ -2507,15 +2565,6 @@ Built for the 2026 UEFN Python wave. First. Most complete. Spec-accurate.
 ---
 
 ## Patch Notes
-
-### Unreleased — qFoldIT Trust & Compliance Layer Merged
-
-- **IP compliance gate** (`qfoldit_trust_runtime.py`): `run_toolbelt_tool` and `execute_python` in `mcp_server.py` now pass through a default-deny watchlist/manifest check before reaching the live editor. Covers LEGO, TMNT, The Walking Dead Universe, Squid Game, KPop Demon Hunters, Star Wars, and flags anything else third-party by default — see [qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer).
-- **Real asset provenance verification**: `TrustRuntime` now accepts an `asset_metadata_fn` hook wired to the live editor's own Asset Registry (via the existing `get_asset_info` IPC command — no network call). Path claims in a tool call are resolved through the engine instead of trusted as text; a mismatch (text says Epic-native, engine disagrees) is blocked as spoofing rather than silently allowed. `license_manifest.json` entries gained `content_plugin_ids` for real plugin-level matching per brand.
-- **Boltz commission pricing** (`qfoldit_monetization_registry.py` + `boltz_pricing.json`): `qfoldit_evaluate_commission` now accepts `sequence_length`/`num_samples` and returns a local, offline compute-time + cost estimate for Boltz-backed commissions. No network lookup — consistent with this repo's zero-outbound-calls guarantee — and no invented dollar figures: `estimated_cost_usd` stays `null` until `rate_usd_per_gpu_second` is filled in from your real Modal billing.
-- **Dashboard visualization**: new `qfoldit_trust_dashboard` tool (category: Dashboard) — read-only PySide6 panel summarizing the compliance audit log (allowed/blocked, provenance method breakdown), licensed brands with royalty/review status, and the commission ledger (accepted/blocked, priced vs. unpriced totals). Registered the standard 3-step way in `tools/__init__.py`, no changes to `dashboard_pyside6.py` required.
-- **Science MCP Registry** (`qfoldit_science_mcp_registry.py`): separate `verified`/`connected`/`best_effort`/`reference_only` gate for which scientific MCP servers auto-connect vs. require explicit opt-in.
-- **31 tests** across `tests/test_qfoldit_trust_runtime.py` (16), `tests/test_qfoldit_science_mcp_registry.py` (7), `tests/test_qfoldit_monetization_registry.py` (8). Run with plain `python3`, no UEFN editor needed.
 
 ### v1.5.3 — March 2026 (Audit Fixes + MCP Auto-Start)
 
