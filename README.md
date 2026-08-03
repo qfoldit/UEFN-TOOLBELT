@@ -2846,6 +2846,19 @@ This software is free and open source. You may use, fork, and modify it under AG
 
 Full license: see [`LICENSE`](LICENSE) — or read it in the dashboard under **About → License**.
 
+### qFoldIT-contributed components
+
+The compliance/science/gamification/experiment-record layer under [`qfoldit/`](qfoldit/README.md) and
+[`.claude/skills/`](.claude/skills/game-designer) — see
+[qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer) and
+[qFoldIT Science, Gamification & Experiment Pipeline](#qfoldit-science-gamification--experiment-pipeline)
+above — was merged from the qFoldIT team into this repository and ships as part of this same codebase,
+under the same AGPL-3.0 terms above, unless a `LICENSE`/`NOTICE` file inside `qfoldit/` states otherwise.
+No such file exists in `qfoldit/` at present — if the qFoldIT team requires separate terms for their
+components, that should be added as an explicit `qfoldit/LICENSE` or `qfoldit/NOTICE` file rather than
+assumed.
+
 ---
 
 *Built by Ocean Bennett — [@undergroundrap](https://github.com/undergroundrap) — for the 2026 UEFN Python wave.*
+*qFoldIT extension merged from the qFoldIT team — see [qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer).*
