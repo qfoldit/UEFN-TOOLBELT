@@ -163,9 +163,14 @@ DEFAULT_WATCHLIST = [
 
 
 class TrustRuntime:
+    # Default location is next to THIS file, not "wherever the process's
+    # CWD happens to be" — matters because mcp_server.py may launch from
+    # inside the UEFN editor's own working directory, not the repo root.
+    _DEFAULT_MANIFEST_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "license_manifest.json")
+
     def __init__(
         self,
-        manifest_path: str = "license_manifest.json",
+        manifest_path: str | None = None,
         engine_version: str = "UE5",
         audit_log_path: str = "trust_audit.log.jsonl",
         watchlist: list[str] | None = None,
@@ -173,13 +178,23 @@ class TrustRuntime:
             "/EpicContent/", "/FortniteGame/", "/Engine/",
         ),
         asset_metadata_fn: "Callable[[str], dict[str, Any] | None] | None" = None,
+        watchlist_metadata: "dict[str, dict[str, Any]] | None" = None,
     ):
-        self.manifest_path = manifest_path
+        self.manifest_path = manifest_path or self._DEFAULT_MANIFEST_PATH
         self.engine_version = engine_version
         self.audit_log_path = audit_log_path
         self.watchlist = [w.lower() for w in (watchlist or DEFAULT_WATCHLIST)]
         self.epic_native_prefixes = epic_native_namespace_prefixes
         self.manifest: dict[str, ManifestEntry] = self._load_manifest()
+        # Optional {term: {"category": ..., "rightsholder": ..., ...}} lookup
+        # from qfoldit.compliance.watchlist_loader — populated only when the
+        # caller opts in via TrustRuntime.with_extended_watchlist() or by
+        # passing this kwarg directly. Purely additive: when None (the
+        # default), deny-reason text is unchanged from before this field
+        # existed. Never used to grant access — only to enrich the reason
+        # string on an already-blocked decision with which real-world
+        # trademark category the matched term belongs to.
+        self.watchlist_metadata = {k.lower(): v for k, v in (watchlist_metadata or {}).items()}
         # Optional hook into the LIVE engine (via the same local IPC channel
         # mcp_server.py already uses for run_toolbelt_tool / execute_python —
         # not a network call). Given a candidate asset path/ref string, it
@@ -190,6 +205,29 @@ class TrustRuntime:
         # is" check. When left as None, behavior is unchanged from before —
         # every allow decision is marked provenance_method="text_heuristic".
         self.asset_metadata_fn = asset_metadata_fn
+
+    @classmethod
+    def with_extended_watchlist(
+        cls,
+        watchlists_dir: str | None = None,
+        **kwargs: Any,
+    ) -> "TrustRuntime":
+        """Build a TrustRuntime whose watchlist includes DEFAULT_WATCHLIST
+        plus every 'enabled': true term from qfoldit/compliance/watchlists/
+        (e.g. scientific_equipment_watchlist.json, vehicle_watchlist.json).
+
+        This is the recommended way to opt into the real-world-trademark
+        extensions (lab/analytical equipment, vehicles/heavy equipment) —
+        it keeps DEFAULT_WATCHLIST as the base rather than silently
+        replacing it, and carries the extension metadata through so
+        deny-reason text can name the matched term's category.
+        """
+        from .watchlist_loader import build_extended_watchlist  # local import: avoid a hard dependency for callers who never use this
+
+        merged_terms, metadata = build_extended_watchlist(DEFAULT_WATCHLIST, directory=watchlists_dir)
+        kwargs.setdefault("watchlist", merged_terms)
+        kwargs.setdefault("watchlist_metadata", metadata)
+        return cls(**kwargs)
 
     # -- manifest -------------------------------------------------------
 
@@ -222,13 +260,25 @@ class TrustRuntime:
     def _normalize(s: str) -> str:
         # Strip anything that isn't a letter/digit so "Spider-Man",
         # "spiderman", and "SPIDER_MAN" all normalize the same way.
+        # Uses \w (Unicode-aware in Python 3 str patterns), NOT a bare
+        # a-z0-9 character class — an ASCII-only class would silently
+        # strip every character out of a non-Latin term (e.g. Cyrillic
+        # "Kamaz" written in its native Cyrillic form), reducing it to "",
+        # and an empty string is a substring
+        # of everything, which would make that term match every single
+        # call. This bit for real when Cyrillic vehicle-brand terms were
+        # added to a watchlist extension — see
+        # tests/test_qfoldit_watchlist_extensions.py.
         # This is still a blunt instrument (no stemming, no fuzzy/typo
         # matching) — treat it as a first-pass trigger, not a guarantee.
-        return re.sub(r"[^a-z0-9]", "", s.lower())
+        return re.sub(r"[\W_]", "", s.lower(), flags=re.UNICODE)
 
     def _find_watchlist_matches(self, text: str) -> list[str]:
         text_n = self._normalize(text)
-        return [term for term in self.watchlist if self._normalize(term) in text_n]
+        return [
+            term for term in self.watchlist
+            if self._normalize(term) and self._normalize(term) in text_n
+        ]
 
     # -- provenance (real, engine-backed — not just text) -------------------
 
@@ -352,15 +402,27 @@ class TrustRuntime:
                 break
 
         if entry is None:
+            reason = (
+                f"Matched watchlisted term(s) {matches} in a non-Epic-native "
+                f"reference, and no license_manifest.json entry exists for it. "
+                f"This is blocked by default — presence alone never authorizes "
+                f"use. Add a real, verifiable manifest entry if you actually "
+                f"hold rights for this."
+            )
+            meta = self.watchlist_metadata.get(matches[0]) if self.watchlist_metadata else None
+            if meta:
+                category = meta.get("category", "unclassified")
+                rightsholder = meta.get("rightsholder", "unknown rightsholder")
+                reason += (
+                    f" [category={category}, rightsholder={rightsholder}] — note this "
+                    f"category typically has no Epic IP Partner Licensing Agreement "
+                    f"pathway; a manifest entry here would need to be "
+                    f"license_type='creator_independent_license' backed by a real, "
+                    f"independently-negotiated document."
+                )
             decision = Decision(
                 allowed=False,
-                reason=(
-                    f"Matched watchlisted term(s) {matches} in a non-Epic-native "
-                    f"reference, and no license_manifest.json entry exists for it. "
-                    f"This is blocked by default — presence alone never authorizes "
-                    f"use. Add a real, verifiable manifest entry if you actually "
-                    f"hold rights for this."
-                ),
+                reason=reason,
                 matched_terms=matches,
             )
             self._audit(tool_name, kwargs, decision)
@@ -492,6 +554,69 @@ class TrustRuntime:
         }
         with open(self.audit_log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    @staticmethod
+    def now_ts() -> str:
+        """Current timestamp in this class's own audit-log format
+        (time.strftime("%Y-%m-%dT%H:%M:%S")). Call this before a batch
+        of calls you want to isolate (e.g. building one scene), keep
+        the result, then pass it as `since_ts` to decisions_since() to
+        scope collection to just that batch instead of the whole
+        history in the log file."""
+        return time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    def decisions_since(
+        self,
+        since_ts: str | None = None,
+        tool_name: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Read this runtime's own audit log back out as a list of
+        {tool_name, allowed, matched_terms, reason} dicts — the exact
+        shape `experiment_record.build_experiment_record()`'s
+        `licensing_decisions` argument expects.
+
+        This is what closes the "does the experiment record prove
+        every game object was checked, not just science calls" gap:
+        every allowed/blocked decision this runtime ever makes already
+        gets written to `audit_log_path` via `_audit()` — this just
+        reads that back, it does not re-derive or re-check anything.
+
+        Args:
+            since_ts: Optional timestamp string in this class's own
+                format (see `now_ts()`) — only entries at or after this
+                are returned. None returns the entire log.
+            tool_name: Optional exact-match filter, e.g.
+                "run_toolbelt_tool" to isolate scene-building calls
+                from qfoldit_* science-tool calls that share the same
+                log file.
+
+        Returns [] (not an error) if the audit log file doesn't exist
+        yet — a fresh session with no calls made is a valid, empty
+        state, not a failure.
+        """
+        if not os.path.isfile(self.audit_log_path):
+            return []
+        out: list[dict[str, Any]] = []
+        with open(self.audit_log_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # skip a corrupt/partial line rather than fail the whole read
+                if since_ts is not None and rec.get("ts", "") < since_ts:
+                    continue
+                if tool_name is not None and rec.get("tool_name") != tool_name:
+                    continue
+                out.append({
+                    "tool_name": rec.get("tool_name", "unknown"),
+                    "allowed": rec.get("allowed", False),
+                    "matched_terms": rec.get("matched_terms", []),
+                    "reason": rec.get("reason", ""),
+                })
+        return out
 
     def deny_response(self, decision: Decision) -> str:
         return json.dumps({

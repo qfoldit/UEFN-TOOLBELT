@@ -33,7 +33,7 @@ import os
 import time
 from dataclasses import dataclass, field
 
-from qfoldit_trust_runtime import TrustRuntime, Decision
+from qfoldit.compliance.trust_runtime import TrustRuntime, Decision
 
 
 @dataclass
@@ -45,10 +45,13 @@ class BoltzCostEstimate:
     note: str
 
 
+_DEFAULT_PRICING_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boltz_pricing.json")
+
+
 def estimate_boltz_cost(
     sequence_length: int,
     num_samples: int = 1,
-    pricing_path: str = "boltz_pricing.json",
+    pricing_path: str | None = None,
 ) -> BoltzCostEstimate:
     """Local, offline compute-cost estimate for a Boltz-2 job.
 
@@ -58,6 +61,7 @@ def estimate_boltz_cost(
     billing dashboard. If it's missing, this returns a time estimate but
     estimated_cost_usd=None — callers must not silently treat that as free.
     """
+    pricing_path = pricing_path or _DEFAULT_PRICING_PATH
     if os.path.exists(pricing_path):
         with open(pricing_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
@@ -121,13 +125,15 @@ class CommissionDecision:
 
 
 class MonetizationRegistry:
+    _DEFAULT_CHANNELS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "monetization_channels.json")
+
     def __init__(
         self,
-        channels_path: str = "monetization_channels.json",
+        channels_path: str | None = None,
         commission_log_path: str = "commission_ledger.log.jsonl",
         trust: TrustRuntime | None = None,
     ):
-        self.channels_path = channels_path
+        self.channels_path = channels_path or self._DEFAULT_CHANNELS_PATH
         self.commission_log_path = commission_log_path
         self.channels: dict[str, MonetizationChannel] = self._load()
         # Reuse the same compliance gate already built for UEFN calls —
@@ -179,7 +185,7 @@ class MonetizationRegistry:
         task_type: str,  # "l_system" | "drug_design" | "molecular_structure" | other
         sequence_length: int | None = None,
         num_samples: int = 1,
-        pricing_path: str = "boltz_pricing.json",
+        pricing_path: str | None = None,
     ) -> CommissionDecision:
         """Gate a customer-paid commission request before accepting payment.
 

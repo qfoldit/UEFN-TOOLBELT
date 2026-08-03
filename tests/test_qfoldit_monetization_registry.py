@@ -3,8 +3,8 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from qfoldit_trust_runtime import TrustRuntime  # noqa: E402
-from qfoldit_monetization_registry import MonetizationRegistry  # noqa: E402
+from qfoldit.compliance.trust_runtime import TrustRuntime  # noqa: E402
+from qfoldit.monetization.monetization_registry import MonetizationRegistry  # noqa: E402
 
 
 def _fresh_registry():
@@ -12,9 +12,9 @@ def _fresh_registry():
     os.close(fd1)
     fd2, audit_log = tempfile.mkstemp(suffix=".jsonl")
     os.close(fd2)
-    trust = TrustRuntime(manifest_path="license_manifest.json", engine_version="UE5", audit_log_path=audit_log)
+    trust = TrustRuntime(manifest_path="qfoldit/compliance/license_manifest.json", engine_version="UE5", audit_log_path=audit_log)
     return MonetizationRegistry(
-        channels_path="monetization_channels.json",
+        channels_path="qfoldit/monetization/monetization_channels.json",
         commission_log_path=commission_log,
         trust=trust,
     )

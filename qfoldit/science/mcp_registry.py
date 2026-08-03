@@ -50,12 +50,14 @@ class MCPServerRecord:
 
 
 class ScienceMCPRegistry:
+    _DEFAULT_REGISTRY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "science_mcp_registry.json")
+
     def __init__(
         self,
-        registry_path: str = "science_mcp_registry.json",
+        registry_path: str | None = None,
         connection_log_path: str = "science_mcp_connections.log.jsonl",
     ):
-        self.registry_path = registry_path
+        self.registry_path = registry_path or self._DEFAULT_REGISTRY_PATH
         self.connection_log_path = connection_log_path
         self.servers: dict[str, MCPServerRecord] = self._load()
 

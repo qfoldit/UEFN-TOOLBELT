@@ -1,0 +1,400 @@
+{
+  "_README": [
+    "REVIEW-TRIGGER list, not a permission list -- same rule as DEFAULT_WATCHLIST",
+    "in trust_runtime.py. A match here never grants access by itself.",
+    "",
+    "ENGLISH-ONLY BY DESIGN: every term and alias in this file is an",
+    "ASCII/Latin transliteration, even for manufacturers whose native",
+    "branding is in Cyrillic (e.g. Kamaz, Belaz, Rusak). No native-script",
+    "text is stored anywhere in this file -- keys, aliases, or notes.",
+    "TRADE-OFF: this means a prompt/asset name written in actual Cyrillic",
+    "(e.g. the real Cyrillic spelling of Kamaz) will NOT be caught by",
+    "TrustRuntime._normalize()'s substring match against these entries,",
+    "since matching is literal-substring, not phonetic. If your project",
+    "generates or ingests Russian-language prompts/asset names, this is a",
+    "real coverage gap, not a cosmetic one -- consider a separate,",
+    "explicitly-scoped multi-script alias module if that matters for your",
+    "pipeline, rather than silently assuming transliteration is sufficient.",
+    "",
+    "Legal basis: TRADEMARK on the manufacturer/model name, and -- for",
+    "several of these, especially the passenger-car and heavy-equipment",
+    "entries -- vehicle body designs are also frequently protected as trade",
+    "dress or registered design/industrial-design rights in various",
+    "jurisdictions, independent of the name. There is no known Epic IP",
+    "Partner Licensing Agreement pathway for any vehicle manufacturer as of",
+    "2026-08-02 (that program covers entertainment franchises like LEGO/",
+    "TMNT/Star Wars, not automakers). Matching a term here should resolve",
+    "to BLOCKED unless your studio holds a real, independently-negotiated",
+    "license from that specific manufacturer",
+    "(license_type='creator_independent_license' in license_manifest.json)",
+    "-- e.g. a genuine licensed racing/sim partnership. Never add a",
+    "manifest entry because a deal 'seems plausible.'",
+    "",
+    "SCOPE LIMIT (read before relying on this for a vehicle-heavy build):",
+    "this is a text-match gate over tool-call payloads. It only catches the",
+    "manufacturer/model NAME appearing in a prompt, asset label, or code",
+    "string. It cannot detect a mesh that visually replicates a real",
+    "vehicle's body/silhouette (e.g. a BMW kidney grille, a Peterbilt hood",
+    "shape) without the name ever appearing in text -- trade dress risk from",
+    "pure geometry is a separate, unsolved problem this file does not cover.",
+    "",
+    "HIGH FALSE-POSITIVE RISK: several brand names in this list transliterate",
+    "to, or resemble, ordinary dictionary words (e.g. the manufacturer 'Sever'",
+    "is the Russian word for 'north'; 'Gaz' collides with the English word",
+    "'gas'; 'Khan' is a common name/title; 'Zvezda' is the Russian word for",
+    "'star'; 'Sokol' is the Russian word for 'falcon'). These are flagged",
+    "'false_positive_risk': 'high' and are NOT included in the flattened",
+    "term list by default -- see 'enabled': false. Enable them only with a",
+    "qualifying alias (e.g. a specific model name) after checking your own",
+    "audit log for noise, exactly as trust_runtime.py's _normalize()",
+    "docstring warns for blunt substring matching in general.",
+    "",
+    "Sourced from the manufacturer/model list supplied 2026-08-02, covering:",
+    "wheeled amphibious all-terrain vehicles, articulated/multi-axle",
+    "vehicles, tracked ATVs, giant quads, air boats, long-haul trucks,",
+    "construction/heavy equipment, passenger cars, and extreme special-",
+    "purpose transport (military/rescue/mining)."
+  ],
+
+  "sherp": {
+    "aliases": [],
+    "rightsholder": "SHERP (Sherp Global s.r.o. and related entities)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "wheeled amphibious ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "arkhant": {
+    "aliases": ["arkhant neva"],
+    "rightsholder": "Arkhant (manufacturer of record to be confirmed from a real source before any manifest entry)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "wheeled amphibious ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "bigbo": {
+    "aliases": [],
+    "rightsholder": "BigBo (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "wheeled amphibious ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "zvezda t10": {
+    "aliases": ["severobus"],
+    "rightsholder": "ZVEZDA (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "tactical command vehicle",
+    "false_positive_risk": "low",
+    "notes": "Bare 'zvezda' (Russian for 'star') is excluded on purpose -- see README. Use the qualified model name.",
+    "enabled": true
+  },
+  "ag-34": {
+    "aliases": ["ag-30", "garagashyan"],
+    "rightsholder": "Designer Alexey Garagashyan / AG (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "tactical ATV pickup",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+
+  "rusak": {
+    "aliases": ["rusak k-10"],
+    "rightsholder": "Rusak (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "articulated multi-axle ATV (6x6/8x8)",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "burlak": {
+    "aliases": [],
+    "rightsholder": "Burlak (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "articulated expedition ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "taktik": {
+    "aliases": [],
+    "rightsholder": "TAKTIK (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "articulated ATV",
+    "false_positive_risk": "medium",
+    "notes": "'Taktik' overlaps with the common English word 'tactic' -- watch audit log for noise.",
+    "enabled": true
+  },
+  "shatun": {
+    "aliases": [],
+    "rightsholder": "Shatun (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "articulated ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "billy's garage": {
+    "aliases": ["billys garage"],
+    "rightsholder": "Billy's Garage (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "custom articulated ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+
+  "tinger": {
+    "aliases": ["tinger tf4", "tinger tf4 vpro"],
+    "rightsholder": "TINGER (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "tracked amphibious ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "jagger garage": {
+    "aliases": ["jagger garage p-3", "jagger garage p-41"],
+    "rightsholder": "Jagger Garage (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "custom tracked vehicle",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+
+  "rb motors": {
+    "aliases": [],
+    "rightsholder": "RB Motors (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "giant ATV/quad",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "rosa vetrov": {
+    "aliases": [],
+    "rightsholder": "Rosa Vetrov (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "air boat",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+
+  "scania": {
+    "aliases": [],
+    "rightsholder": "Scania AB",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "volvo trucks": {
+    "aliases": ["volvo fh"],
+    "rightsholder": "AB Volvo",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "mercedes-benz trucks": {
+    "aliases": ["actros", "mercedes actros"],
+    "rightsholder": "Daimler Truck AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "peterbilt": {
+    "aliases": ["peterbilt 389"],
+    "rightsholder": "PACCAR Inc.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "kenworth": {
+    "aliases": ["kenworth w900"],
+    "rightsholder": "PACCAR Inc.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "kamaz": {
+    "aliases": ["kamaz-54901"],
+    "rightsholder": "PJSC KAMAZ",
+    "category": "vehicle_trademark",
+    "vehicle_class": "heavy truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+
+  "caterpillar": {
+    "aliases": ["cat d11", "cat 797f"],
+    "rightsholder": "Caterpillar Inc.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "construction/mining equipment",
+    "false_positive_risk": "high",
+    "notes": "Bare 'CAT' is excluded on purpose -- it collides with the animal word 'cat'. Use 'caterpillar' or a qualified model alias.",
+    "enabled": true
+  },
+  "komatsu": {
+    "aliases": [],
+    "rightsholder": "Komatsu Ltd.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "construction equipment",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "john deere": {
+    "aliases": [],
+    "rightsholder": "Deere & Company",
+    "category": "vehicle_trademark",
+    "vehicle_class": "agricultural equipment",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "liebherr": {
+    "aliases": [],
+    "rightsholder": "Liebherr-International AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "cranes/construction equipment",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "jcb": {
+    "aliases": ["jcb 3cx"],
+    "rightsholder": "J C Bamford Excavators Ltd.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "excavator-loader",
+    "false_positive_risk": "medium",
+    "notes": "Three-letter acronym -- watch audit log for unrelated 'jcb' collisions.",
+    "enabled": true
+  },
+
+  "audi": {
+    "aliases": ["quattro", "audi rs6", "audi r8", "audi e-tron"],
+    "rightsholder": "AUDI AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "mercedes-benz": {
+    "aliases": ["mbux", "mercedes s-class", "mercedes g-class", "mercedes-amg"],
+    "rightsholder": "Mercedes-Benz Group AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "toyota": {
+    "aliases": ["land cruiser", "toyota supra", "toyota corolla"],
+    "rightsholder": "Toyota Motor Corporation",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "porsche": {
+    "aliases": ["porsche 911"],
+    "rightsholder": "Dr. Ing. h.c. F. Porsche AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "bmw": {
+    "aliases": ["bmw m3", "bmw m5"],
+    "rightsholder": "Bayerische Motoren Werke AG",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car",
+    "false_positive_risk": "medium",
+    "notes": "Three-letter acronym -- watch audit log for unrelated collisions.",
+    "enabled": true
+  },
+  "ford f-150": {
+    "aliases": ["ford motor company"],
+    "rightsholder": "Ford Motor Company",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger truck",
+    "false_positive_risk": "high",
+    "notes": "Bare 'ford' is excluded -- common surname/word. Only the qualified model/company forms are listed as terms.",
+    "enabled": true
+  },
+  "tesla motors": {
+    "aliases": ["tesla model", "tesla autopilot"],
+    "rightsholder": "Tesla, Inc.",
+    "category": "vehicle_trademark",
+    "vehicle_class": "passenger car (EV)",
+    "false_positive_risk": "high",
+    "notes": "Bare 'tesla' is excluded -- collides with the SI unit and the historical figure Nikola Tesla. Only qualified forms are listed as terms.",
+    "enabled": true
+  },
+
+  "belaz": {
+    "aliases": [],
+    "rightsholder": "BELAZ (OJSC 'BELAZ')",
+    "category": "vehicle_trademark",
+    "vehicle_class": "mining haul truck",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "ural-4320": {
+    "aliases": ["sadko next"],
+    "rightsholder": "Ural Automotive Plant / GAZ Group (manufacturer of record to be confirmed per model)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "off-road truck",
+    "false_positive_risk": "high",
+    "notes": "Bare 'ural' (the Ural mountains/region) and 'gaz' (collides with the English word 'gas') are excluded -- see README. Only qualified model names are listed as terms.",
+    "enabled": true
+  },
+  "oshkosh": {
+    "aliases": [],
+    "rightsholder": "Oshkosh Corporation",
+    "category": "vehicle_trademark",
+    "vehicle_class": "tactical/fire apparatus",
+    "false_positive_risk": "medium",
+    "notes": "Also a U.S. city name -- watch audit log for unrelated collisions.",
+    "enabled": true
+  },
+
+  "sever boats": {
+    "aliases": [],
+    "rightsholder": "Sever (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "air boat",
+    "false_positive_risk": "high",
+    "notes": "'Sever' is the Russian word for 'north', an extremely common word. Excluded from the flattened default term list ('enabled': false) -- only enable with a qualifying alias.",
+    "enabled": false
+  },
+  "alligator boats": {
+    "aliases": [],
+    "rightsholder": "Alligator (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "air boat",
+    "false_positive_risk": "high",
+    "notes": "Bare 'alligator' is excluded -- common animal word. Only the qualified form is listed as a term.",
+    "enabled": true
+  },
+  "sokol atv": {
+    "aliases": [],
+    "rightsholder": "Sokol (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "giant quad ATV",
+    "false_positive_risk": "high",
+    "notes": "'Sokol' is the Russian word for 'falcon', a common word. Excluded from default term list -- enable only with a qualifying alias.",
+    "enabled": false
+  },
+  "sekach": {
+    "aliases": [],
+    "rightsholder": "Sekach (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "giant quad ATV",
+    "false_positive_risk": "low",
+    "enabled": true
+  },
+  "khan atv": {
+    "aliases": [],
+    "rightsholder": "Khan (manufacturer of record to be confirmed)",
+    "category": "vehicle_trademark",
+    "vehicle_class": "giant quad ATV",
+    "false_positive_risk": "high",
+    "notes": "'Khan' is a common name/title. Excluded from default term list -- enable only with a qualifying alias.",
+    "enabled": false
+  }
+}

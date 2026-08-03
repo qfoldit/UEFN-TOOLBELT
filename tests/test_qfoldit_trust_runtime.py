@@ -9,10 +9,10 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from qfoldit_trust_runtime import TrustRuntime  # noqa: E402
+from qfoldit.compliance.trust_runtime import TrustRuntime  # noqa: E402
 
 
-def _fresh_runtime(engine_version="UE5", manifest_path="license_manifest.json"):
+def _fresh_runtime(engine_version="UE5", manifest_path="qfoldit/compliance/license_manifest.json"):
     audit_fd, audit_path = tempfile.mkstemp(suffix=".jsonl")
     os.close(audit_fd)
     return TrustRuntime(
@@ -111,7 +111,7 @@ def _fresh_runtime_with_engine(asset_metadata_fn, engine_version="UE5"):
     audit_fd, audit_path = tempfile.mkstemp(suffix=".jsonl")
     os.close(audit_fd)
     return TrustRuntime(
-        manifest_path="license_manifest.json",
+        manifest_path="qfoldit/compliance/license_manifest.json",
         engine_version=engine_version,
         audit_log_path=audit_path,
         asset_metadata_fn=asset_metadata_fn,

@@ -1,0 +1,228 @@
+{
+  "_README": [
+    "REVIEW-TRIGGER list, not a permission list -- same rule as DEFAULT_WATCHLIST",
+    "in trust_runtime.py: a match here never grants access by itself.",
+    "",
+    "Legal basis is TRADEMARK (brand/company names, and in some cases",
+    "registered product-line names), NOT the Epic IP Partner Licensing",
+    "Agreement channel that license_manifest.json documents for LEGO/TMNT/",
+    "Star Wars/etc. There is no known Epic-brokered UEFN license pathway for",
+    "any of these lab/analytical-equipment manufacturers as of 2026-08-02.",
+    "That means: matching a term here should resolve to BLOCKED unless your",
+    "studio has a REAL, independently-negotiated document from that specific",
+    "rightsholder (license_type='creator_independent_license' in",
+    "license_manifest.json) -- e.g. a genuine sponsored-training-sim deal",
+    "with a real manufacturer for an educational/onboarding build. Never add",
+    "a manifest entry for one of these terms because a partnership 'seems",
+    "plausible' -- that is exactly the fabricated-relationship failure mode",
+    "trust_runtime.py's module docstring warns against.",
+    "",
+    "KNOWN FALSE-POSITIVE RISK: entries flagged",
+    "'false_positive_risk': 'high' use a short or generic-sounding brand",
+    "name (e.g. IKA, Roche) that can appear as a substring of unrelated",
+    "words once normalized (letters/digits only, per",
+    "TrustRuntime._normalize). Before enabling this file in production,",
+    "review those entries and prefer a qualifying alias",
+    "('ika-werke', 'roche diagnostics') over the bare short form if false",
+    "positives show up in your own audit log.",
+    "",
+    "SCOPE LIMIT: this is a text-match gate over tool-call payloads (asset",
+    "names, prompts, labels, code strings). It cannot detect a 3D model that",
+    "visually replicates a real instrument's industrial design without ever",
+    "naming the brand in text -- that is a separate, unsolved problem this",
+    "file does not claim to cover.",
+    "",
+    "Sourced from the manufacturer list supplied 2026-08-02 (broad-line,",
+    "general-lab, analytical/spectrometric, and biotech-equipment vendors).",
+    "Sub-brands owned by a parent company are listed as their own terms",
+    "because prompts/asset names are more likely to reference the sub-brand",
+    "than the parent (e.g. 'Invitrogen' rather than 'Thermo Fisher')."
+  ],
+
+  "thermo fisher scientific": {
+    "aliases": ["thermo fisher", "thermofisher"],
+    "rightsholder": "Thermo Fisher Scientific Inc.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["analytical instruments", "reagents", "consumables", "lab software"],
+    "false_positive_risk": "low"
+  },
+  "thermo scientific": {
+    "aliases": [],
+    "rightsholder": "Thermo Fisher Scientific Inc.",
+    "category": "scientific_equipment_trademark",
+    "notes": "Sub-brand of Thermo Fisher Scientific.",
+    "false_positive_risk": "low"
+  },
+  "applied biosystems": {
+    "aliases": [],
+    "rightsholder": "Thermo Fisher Scientific Inc.",
+    "category": "scientific_equipment_trademark",
+    "false_positive_risk": "low"
+  },
+  "invitrogen": {
+    "aliases": [],
+    "rightsholder": "Thermo Fisher Scientific Inc.",
+    "category": "scientific_equipment_trademark",
+    "false_positive_risk": "low"
+  },
+  "fisher scientific": {
+    "aliases": [],
+    "rightsholder": "Thermo Fisher Scientific Inc.",
+    "category": "scientific_equipment_trademark",
+    "false_positive_risk": "low"
+  },
+
+  "danaher": {
+    "aliases": ["danaher corporation"],
+    "rightsholder": "Danaher Corporation",
+    "category": "scientific_equipment_trademark",
+    "false_positive_risk": "low"
+  },
+  "beckman coulter": {
+    "aliases": [],
+    "rightsholder": "Danaher Corporation (Beckman Coulter, Inc.)",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["centrifuges", "lab automation"],
+    "false_positive_risk": "low"
+  },
+  "sciex": {
+    "aliases": [],
+    "rightsholder": "Danaher Corporation (SCIEX)",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["mass spectrometry"],
+    "false_positive_risk": "low"
+  },
+  "leica microsystems": {
+    "aliases": [],
+    "rightsholder": "Danaher Corporation (Leica Microsystems)",
+    "category": "scientific_equipment_trademark",
+    "notes": "Distinct legal entity from Leica Camera AG (unrelated company, cameras) -- do not conflate when documenting a manifest entry.",
+    "false_positive_risk": "low"
+  },
+  "cytiva": {
+    "aliases": [],
+    "rightsholder": "Danaher Corporation (Cytiva)",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["bioprocessing"],
+    "false_positive_risk": "low"
+  },
+
+  "agilent": {
+    "aliases": ["agilent technologies"],
+    "rightsholder": "Agilent Technologies, Inc.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["chromatography", "mass spectrometry", "molecular spectroscopy"],
+    "false_positive_risk": "low"
+  },
+
+  "milliporesigma": {
+    "aliases": ["millipore sigma"],
+    "rightsholder": "Merck KGaA",
+    "category": "scientific_equipment_trademark",
+    "notes": "MilliporeSigma is the U.S./Canada life-science brand of Merck KGaA (which trades as EMD in North America for trademark reasons unrelated to Merck & Co., Inc. -- two separate companies).",
+    "false_positive_risk": "low"
+  },
+  "merck kgaa": {
+    "aliases": [],
+    "rightsholder": "Merck KGaA",
+    "category": "scientific_equipment_trademark",
+    "false_positive_risk": "low"
+  },
+
+  "eppendorf": {
+    "aliases": [],
+    "rightsholder": "Eppendorf SE",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["pipettes", "liquid handling", "centrifuges", "cell culture"],
+    "false_positive_risk": "low"
+  },
+  "mettler toledo": {
+    "aliases": ["mettler-toledo"],
+    "rightsholder": "Mettler-Toledo International Inc.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["precision balances", "titrators", "pH meters", "thermal analysis"],
+    "false_positive_risk": "low"
+  },
+  "sartorius": {
+    "aliases": [],
+    "rightsholder": "Sartorius AG",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["balances", "filtration", "bioprocessing"],
+    "false_positive_risk": "low"
+  },
+  "ika": {
+    "aliases": ["ika-werke"],
+    "rightsholder": "IKA-Werke GmbH & Co. KG",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["stirrers", "shakers", "rotary evaporators", "calorimeters"],
+    "false_positive_risk": "high",
+    "notes": "Three-letter brand name -- prefer the 'ika-werke' alias in production watchlists to reduce substring false positives from unrelated normalized text."
+  },
+  "memmert": {
+    "aliases": [],
+    "rightsholder": "Memmert GmbH + Co. KG",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["incubators", "climate chambers", "drying ovens"],
+    "false_positive_risk": "low"
+  },
+
+  "shimadzu": {
+    "aliases": [],
+    "rightsholder": "Shimadzu Corporation",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["chromatography", "spectroscopy"],
+    "false_positive_risk": "low"
+  },
+  "waters corporation": {
+    "aliases": ["waters corp"],
+    "rightsholder": "Waters Corporation",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["HPLC", "LC-MS"],
+    "false_positive_risk": "medium",
+    "notes": "'Waters' alone is too generic (common English word) -- only the qualified forms are listed as terms/aliases on purpose."
+  },
+  "bruker": {
+    "aliases": [],
+    "rightsholder": "Bruker Corporation",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["NMR", "X-ray diffraction", "MALDI-TOF mass spectrometry"],
+    "false_positive_risk": "low"
+  },
+  "perkinelmer": {
+    "aliases": ["perkin elmer"],
+    "rightsholder": "PerkinElmer, Inc. (Revvity, Inc.)",
+    "category": "scientific_equipment_trademark",
+    "notes": "Company renamed part of its business to Revvity in 2023 -- if generating current-day content, verify which entity name is live before writing a manifest entry.",
+    "false_positive_risk": "low"
+  },
+
+  "illumina": {
+    "aliases": [],
+    "rightsholder": "Illumina, Inc.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["NGS sequencing", "genetic analysis"],
+    "false_positive_risk": "low"
+  },
+  "bio-rad": {
+    "aliases": ["biorad", "bio-rad laboratories"],
+    "rightsholder": "Bio-Rad Laboratories, Inc.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["electrophoresis", "PCR / ddPCR", "western blot", "gel imaging"],
+    "false_positive_risk": "low"
+  },
+  "qiagen": {
+    "aliases": [],
+    "rightsholder": "QIAGEN N.V.",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["nucleic acid purification", "lab automation"],
+    "false_positive_risk": "low"
+  },
+  "roche diagnostics": {
+    "aliases": [],
+    "rightsholder": "F. Hoffmann-La Roche AG",
+    "category": "scientific_equipment_trademark",
+    "product_lines": ["clinical diagnostics", "biochemical/immunochemical analyzers"],
+    "false_positive_risk": "medium",
+    "notes": "'Roche' alone is a common surname -- only the qualified 'roche diagnostics' form is listed as a term on purpose."
+  }
+}

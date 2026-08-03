@@ -1,9 +1,9 @@
 """
 qFoldIT Trust & Compliance Dashboard
 =====================================
-A visualization panel over the three qfoldit_* logs/manifests that live at
-the repo root (license_manifest.json, trust_audit.log.jsonl,
-commission_ledger.log.jsonl). Read-only — this window never writes to any
+A visualization panel over the qfoldit/ package's logs/manifests
+(qfoldit/compliance/license_manifest.json, qfoldit/logs/trust_audit.log.jsonl,
+qfoldit/logs/commission_ledger.log.jsonl). Read-only — this window never writes to any
 of them, it just summarizes what qfoldit_trust_runtime.py and
 qfoldit_monetization_registry.py have already recorded.
 
@@ -63,9 +63,10 @@ def _read_jsonl(path: str) -> list[dict]:
 
 
 def _summarize(root: str) -> dict:
-    manifest = _read_json(os.path.join(root, "license_manifest.json"))
-    audit = _read_jsonl(os.path.join(root, "trust_audit.log.jsonl"))
-    commissions = _read_jsonl(os.path.join(root, "commission_ledger.log.jsonl"))
+    qdir = os.path.join(root, "qfoldit")
+    manifest = _read_json(os.path.join(qdir, "compliance", "license_manifest.json"))
+    audit = _read_jsonl(os.path.join(qdir, "logs", "trust_audit.log.jsonl"))
+    commissions = _read_jsonl(os.path.join(qdir, "logs", "commission_ledger.log.jsonl"))
 
     brands = {k: v for k, v in manifest.items() if not k.startswith("_")}
 

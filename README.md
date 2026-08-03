@@ -12,6 +12,38 @@
 
 ---
 
+> **This is the qFoldIT-extended build — "Universal Builder & Gamifier of Scientific
+> [Experiments] with Quantum Computing."**
+>
+> On top of the 355 stock UEFN Python tools documented below, this repository also
+> ships, all under [`qfoldit/`](qfoldit/README.md) and [`.claude/skills/`](.claude/skills/):
+>
+> - a **default-deny IP compliance gate** in front of `run_toolbelt_tool`/`execute_python` —
+>   entertainment brands (LEGO, TMNT, Star Wars, ...) plus, opt-in-by-default in the live
+>   server, real-world **scientific-equipment** (Thermo Fisher, Agilent, Bruker, ...) and
+>   **vehicle** (Sherp, Kamaz, Caterpillar, ...) trademark watchlists;
+> - two real **protein-folding science pipelines** — a classical quantum-walk-inspired
+>   Metropolis simulation, and an import-guarded real CVaR-VQE wrapper that reports
+>   `unavailable` rather than fabricating a result when its optional dependency isn't installed;
+> - a deterministic, sha256-seeded **gamification layer** turning a science result into
+>   levels/par-scores/achievements, with no LLM call and no invented parameters;
+> - an engine-neutral **scene-graph pipeline** (UAG) plus a UEFN-specific builder skill that
+>   only calls real, grep-verified toolbelt tools and reports — rather than papers over — the
+>   node types it can't yet realize (camera actors, UI panels);
+> - a **reproducible, licensing-cleared, publication-honest Experiment Record system** that
+>   ties all of the above together: every game object placed while building a scene has its
+>   licensing decision automatically collected, every science result carries a
+>   citation-grounded methods section that never mislabels classical results as quantum, and
+>   every record is durably logged, not just returned once and lost.
+>
+> None of this is stock UEFN Toolbelt. See
+> **[qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer)** and
+> **[qFoldIT Science, Gamification & Experiment Pipeline](#qfoldit-science-gamification--experiment-pipeline)**
+> below for the full picture, or **[`qfoldit/README.md`](qfoldit/README.md)** for the
+> folder-level detail and honest list of what's still a documented gap rather than done.
+
+---
+
 > **Historic Discovery — March 22, 2026**
 >
 > On this date, **Ocean Bennett** became the first person to programmatically catalogue
@@ -161,6 +193,7 @@ Toolbelt is built to be used with AI (Claude/Gemini). To give your AI **perfect 
 - [Adding a New Tool](#adding-a-new-tool)
 - [Custom Plugins & Security](#custom-plugins--security)
 - [qFoldIT Trust & Compliance Layer](#qfoldit-trust--compliance-layer)
+- [qFoldIT Science, Gamification & Experiment Pipeline](#qfoldit-science-gamification--experiment-pipeline)
 - [API Capability Crawler](#api-capability-crawler)
 - [Fortnite Device API Mapping](#fortnite-device-api-mapping)
 - [MCP — Connect Any AI to UEFN](#mcp--connect-any-ai-to-uefn)
@@ -219,22 +252,28 @@ with open("path/to/script.py") as f:
 > Merged from the [qFoldIT](https://github.com/qfoldit) team — a default-deny gate that sits in
 > front of `run_toolbelt_tool` and `execute_python` in `mcp_server.py`, so that generation/import
 > calls involving third-party brand IP (LEGO, TMNT, Star Wars, The Walking Dead Universe, Squid
-> Game, KPop Demon Hunters, and others) can't slip past this repo's own compliance requirements —
-> for authorized creators, and enforced the same way against any MCP server that connects.
+> Game, KPop Demon Hunters, real-world scientific-equipment brands, real-world vehicle brands, and
+> others) can't slip past this repo's own compliance requirements — for authorized creators, and
+> enforced the same way against any MCP server that connects.
 
-**Files:** `qfoldit_trust_runtime.py` · `qfoldit_science_mcp_registry.py` · `qfoldit_monetization_registry.py` ·
-`license_manifest.json` · `science_mcp_registry.json` · `monetization_channels.json` · `boltz_pricing.json`
-(all at repo root, next to `mcp_server.py`) · `tests/test_qfoldit_*.py` (24 tests, run with plain `python3`)
+**Everything qFoldIT-related lives under [`qfoldit/`](qfoldit/README.md)** — compliance, science,
+and monetization each in their own subfolder, data files next to the code that reads them, runtime
+logs under `qfoldit/logs/`. Two Claude Skills also live under
+[`.claude/skills/`](.claude/skills/game-designer) (`game-designer`, `unreal-world-builder`). See
+[`qfoldit/README.md`](qfoldit/README.md) for the full folder map; tests stay in the top-level
+`tests/` folder alongside `smoke_test.py` (85 qFoldIT tests total, plain `python3`).
 
 ### What it actually does
 
 | Layer | Question it answers | How |
 |---|---|---|
-| **IP Trust Gate** | "Is this asset call actually licensed?" | Default-deny watchlist match → requires a real, dated `license_manifest.json` entry, not just presence in the project |
+| **IP Trust Gate** | "Is this asset call actually licensed?" | Default-deny watchlist match → requires a real, dated `qfoldit/compliance/license_manifest.json` entry, not just presence in the project. The live server runs `TrustRuntime.with_extended_watchlist()`, so the watchlist covers entertainment IP **plus** real-world scientific-equipment and vehicle trademarks (opt-in extensions, active by default in `mcp_server.py`) |
 | **Provenance verification** | "Did this asset really come from where the call claims?" | When an `asset_metadata_fn` is wired to the live editor (via the existing `get_asset_info` IPC command — no network call), path claims are checked against the engine's own Asset Registry, not trusted as text. A path that *looks* Epic-native but resolves somewhere else is blocked as a spoofing attempt, not silently allowed |
 | **Science MCP Registry** | "Is this connected MCP server safe/stable enough to auto-run?" | `verified` / `connected` auto-connect; `best_effort` requires an explicit opt-in; `reference_only` never auto-connects |
-| **Monetization Gate** | "Can we accept payment for this commission, and what will it cost us?" | Off-platform ("Cameo-style") commissions run through the same IP watchlist before payment; Boltz-backed requests get a **local, offline** compute-time estimate from `boltz_pricing.json` — no dollar figure is ever fabricated: `rate_usd_per_gpu_second` ships as `null` until you fill it in from your real Modal billing dashboard |
-| **Dashboard visibility** | "What has the gate actually blocked/allowed/priced?" | `qfoldit_trust_dashboard` tool (category: Dashboard) — read-only panel summarizing the audit log, licensed brands, and commission ledger |
+| **Science pipeline** | "Can I get a real (or honestly-unavailable) folding result from inside the editor?" | `qfoldit_quantum_walk_fold` (real classical Metropolis simulation) and `qfoldit_quantum_vqe_fold` (real CVaR-VQE, import-guarded — reports `unavailable` rather than fabricating an energy) — see [qFoldIT Science, Gamification & Experiment Pipeline](#qfoldit-science-gamification--experiment-pipeline) below |
+| **Scene-object licensing collection** | "Was every object placed while building a scene actually checked, not just the science calls?" | `qfoldit_scene_build_start()` marks the start of a build; `TrustRuntime.decisions_since()` reads the runtime's own audit log back out; `qfoldit_build_experiment_record(auto_collect_licensing_since=...)` folds every real decision made during that window into the record automatically |
+| **Monetization Gate** | "Can we accept payment for this commission, and what will it cost us?" | Off-platform ("Cameo-style") commissions run through the same IP watchlist before payment; Boltz-backed requests get a **local, offline** compute-time estimate from `qfoldit/monetization/boltz_pricing.json` — no dollar figure is ever fabricated: `rate_usd_per_gpu_second` ships as `null` until you fill it in from your real Modal billing dashboard |
+| **Dashboard visibility** | "What has the gate actually blocked/allowed/priced?" | `qfoldit_trust_dashboard` tool (category: Dashboard) — read-only panel summarizing the audit log, licensed brands, and commission ledger; `qfoldit_list_experiment_records` for the durable experiment-record log specifically |
 
 ### Why provenance checking matters here
 
@@ -247,6 +286,19 @@ identifier(s) the engine reports for a brand's genuine template assets — for a
 than namespace prefixes alone. These start empty (`[]`) per brand; fill them in from a real Content
 Browser inspection, they are never guessed.
 
+### Real-world scientific-equipment and vehicle trademarks
+
+Beyond entertainment IP, `qfoldit/compliance/watchlists/scientific_equipment_watchlist.json` and
+`vehicle_watchlist.json` cover lab/analytical-equipment brands (Thermo Fisher, Agilent, Danaher's
+sub-brands, Bruker, Illumina, ...) and vehicle/heavy-equipment brands (Sherp, Kamaz, Caterpillar,
+Scania, Tesla, ...). Neither category has an Epic IP Partner Licensing Agreement pathway, so a match
+resolves to **blocked** unless a real, independently-negotiated `license_type='creator_independent_license'`
+manifest entry exists — no entry is ever added speculatively. Several generic-word brand names (e.g.
+a manufacturer whose name transliterates to the Russian word for "north") are documented but shipped
+`enabled: false` to avoid false-positive noise from ordinary words. Every term/alias in these files is
+English/Latin-script by design — see the files' own `_README` block for the resulting Cyrillic-text
+coverage trade-off. Full detail: [`qfoldit/compliance/watchlists/`](qfoldit/compliance/watchlists/).
+
 ### Boltz commission pricing — honest by construction
 
 This repo's own [Security](#security) guarantees zero outbound network calls anywhere in the
@@ -255,12 +307,83 @@ a compute-time estimate locally from sequence length and a rate table in `boltz_
 `rate_usd_per_gpu_second` is filled in from your actual Modal billing, `qfoldit_evaluate_commission`
 returns `estimated_cost_usd: null` — never a made-up number, and never silently treated as free.
 
-### Running the qFoldIT tests
+## qFoldIT Science, Gamification & Experiment Pipeline
+
+### Science
+
+Two real, tested science tools, callable from inside the editor via `mcp_server.py`, both gated
+through the same IP compliance check as everything else here:
+
+- **`qfoldit_quantum_walk_fold(sequence, steps, continuous_space, seed)`** — a genuine classical
+  Metropolis simulation (biased random-walk proposal + real acceptance step) over peptide torsion
+  angles, inspired by the QFold algorithm (Casares et al., *Quantum Sci. Technol.* 7, 025013, 2022)
+  but explicitly **not** quantum — no circuit simulator or hardware involved. Reconstructs a real
+  3D backbone via standard NeRF geometry. **Documented, test-confirmed limitation:** single-
+  dihedral moves can leave chains of ~14+ residues kinetically trapped in a self-clashed
+  conformation, so a longer run isn't guaranteed to reach lower energy than a short one at that
+  length — see the function's docstring and `tests/test_qfoldit_quantum_runner.py`'s
+  `test_known_limitation_longer_chains_can_stay_kinetically_trapped` for the confirmed numbers.
+- **`qfoldit_quantum_vqe_fold(sequence, alpha, shots)`** — a wrapper around the real CVaR-optimized
+  VQE from QuPepFold (Uttarkar et al., *PLOS ONE*, 2026). Requires the separate `qupepfold` package
+  (Qiskit/Braket-dependent); if it's not installed, returns `status: "unavailable"` with an
+  `install_hint` — never a fabricated ground-state energy. Not independently verified against a real
+  installed `qupepfold` release at authoring time — this caveat is carried forward automatically into
+  any experiment record built from this tool's output (see below).
+
+### Gamification and the scene pipeline (UAG)
+
+- **`qfoldit_generate_game_design(source_json, title, difficulty)`** — deterministic (sha256-seeded,
+  no LLM call) generator turning either science tool's output into levels/par-scores/achievements, so
+  any in-game score traces back to the exact number in the source science result.
+- **`qfoldit_gamedesign_to_uag_seed(game_design_json)`** — bridges a game design document into a
+  starter [Universal Assembly Graph](.claude/skills/game-designer/references/uag_schema.md) (UAG):
+  one `group` node per level, no meshes/lights/interactions invented. Hand the result to the
+  **`game-designer`** Claude Skill ([`.claude/skills/game-designer/`](.claude/skills/game-designer))
+  to design the actual scene content.
+- **`unreal-world-builder`** ([`.claude/skills/unreal-world-builder/`](.claude/skills/unreal-world-builder))
+  — the UEFN-specific engine adapter that realizes a validated UAG by calling this repo's own
+  `run_toolbelt_tool` with real tool names (`light_place`, `zone_spawn`, `audio_place`,
+  `niagara_spawn_system`, `import_fbx`, `stamp_place`, `device_set_property`, ...). It documents
+  rather than papers over its gaps — no tool currently spawns a persistent `CameraActor` or a Verse
+  UI panel, so a UAG needing those gets an explicit report, not a silent skip.
+
+### Experiment Record — reproducibility + licensing + publication readiness, tied together
+
+`qfoldit_build_experiment_record` is the tool that operationalizes this build's stated goal: turning
+gameplay into a reproducible scientific experiment where every game object, action, and computation
+corresponds to a licensing decision, a scientific-validity statement, and a publication-readiness
+check.
+
+- **Reproducibility** — `experiment_id` is a sha256 hash over exactly the deterministic
+  inputs/outputs (the science result + its reproduction parameters + any game-design seed); two
+  records with the same id are, by construction, the same experiment.
+- **Licensing, for every object in the scene, not just science calls** —
+  `qfoldit_scene_build_start()` marks the start of a build; `unreal-world-builder` places the scene;
+  `qfoldit_build_experiment_record(auto_collect_licensing_since=...)` then reads
+  `TrustRuntime`'s own audit log back out (`decisions_since()`) and folds every real decision made
+  during that window into the record automatically. A blocked decision anywhere in that window flags
+  `publication_checklist.licensing_all_cleared: false`.
+- **Publication readiness, reported not decided** — `methods_section()` pulls from a small,
+  hand-checked citation table keyed to the *actual* algorithm, not the tool's marketing name: the
+  classical Metropolis "quantum_walk" simulation is always described as classical (never as a quantum
+  computation), and the real VQE path always carries its "not independently verified" caveat forward.
+  `publication_checklist()` returns five named boolean checks — never a single yes/no verdict; a human
+  still makes the actual publication call.
+- **Durable** — every record built is appended to `qfoldit/logs/experiment_records.log.jsonl`
+  (`qfoldit_list_experiment_records` reads it back), so it survives past the one response that
+  returned it.
 
 ```bash
-python3 tests/test_qfoldit_trust_runtime.py         # 16/16 — includes engine-provenance cases
-python3 tests/test_qfoldit_science_mcp_registry.py  # 7/7
-python3 tests/test_qfoldit_monetization_registry.py # 8/8 — includes Boltz pricing cases
+python3 tests/test_qfoldit_trust_runtime.py                  # 16/16 — includes engine-provenance cases
+python3 tests/test_qfoldit_watchlist_extensions.py           # 8/8 — sci-equipment/vehicle watchlists
+python3 tests/test_qfoldit_science_mcp_registry.py           # 7/7
+python3 tests/test_qfoldit_monetization_registry.py          # 8/8 — includes Boltz pricing cases
+python3 tests/test_qfoldit_quantum_runner.py                 # 12/12 — includes the kinetic-trapping case
+python3 tests/test_qfoldit_gamedesign.py                     # 8/8 — includes a real end-to-end run
+python3 tests/test_qfoldit_uag_bridge.py                     # 9/9 — includes a validator sync-check
+python3 tests/test_qfoldit_experiment_record.py              # 9/9 — includes a real end-to-end run
+python3 tests/test_qfoldit_scene_licensing_collection.py     # 8/8 — audit-log read-back + persistence
+# 85/85 qFoldIT tests total
 ```
 
 ---
@@ -2507,6 +2630,22 @@ Built for the 2026 UEFN Python wave. First. Most complete. Spec-accurate.
 ---
 
 ## Patch Notes
+
+### Unreleased — qFoldIT: Real-World Trademark Watchlists, UAG Scene Pipeline, Experiment Records
+
+- **Real-world trademark watchlist extensions:** `qfoldit/compliance/watchlists/scientific_equipment_watchlist.json` and `vehicle_watchlist.json` — 22 lab/analytical-equipment brands (Thermo Fisher, Agilent, Danaher sub-brands, Bruker, Illumina, ...) and ~35 vehicle/heavy-equipment brands (Sherp, Kamaz, Caterpillar, Scania, Tesla, ...). English/Latin-script only by design (no native-script text anywhere in the files); several generic-word brand names shipped `enabled: false` to avoid false-positive noise. Loaded via the new `qfoldit/compliance/watchlist_loader.py` and `TrustRuntime.with_extended_watchlist()` — **the live `mcp_server.py` server now uses this by default**, not just in tests.
+- **Fixed a real bug found while adding these:** `TrustRuntime._normalize()` was ASCII-only (`[^a-z0-9]`), which silently reduced any non-Latin (e.g. Cyrillic) watchlist term to an empty string — and an empty string matches everything as a substring. Fixed to be Unicode-aware; regression-tested.
+- **UAG scene pipeline:** the `game-designer` Claude Skill (produces engine-neutral Universal Assembly Graphs) and the new `unreal-world-builder` Claude Skill (the only engine adapter in this repo — realizes a UAG via real, grep-verified `run_toolbelt_tool` calls, and explicitly reports node types it can't yet realize instead of skipping them) now live under `.claude/skills/`. `qfoldit/science/uag_bridge.py` + the new `qfoldit_gamedesign_to_uag_seed` tool deterministically bridge a game design document into a starter UAG.
+- **Experiment Record system:** `qfoldit/science/experiment_record.py` + `qfoldit_build_experiment_record` ties a science result, its `TrustRuntime` licensing decisions, and its game-design/UAG context into one sha256-identified, citation-grounded, publication-checklist-carrying record — see [qFoldIT Science, Gamification & Experiment Pipeline](#qfoldit-science-gamification--experiment-pipeline). Records persist to `qfoldit/logs/experiment_records.log.jsonl` (`qfoldit_list_experiment_records` reads them back).
+- **Closed the scene-object-licensing gap:** new `TrustRuntime.decisions_since()`/`now_ts()` read the runtime's own audit log back out; new `qfoldit_scene_build_start`/`qfoldit_collect_scene_licensing` tools plus `qfoldit_build_experiment_record`'s `auto_collect_licensing_since` argument mean an experiment record can now prove every game object placed while building a scene was checked, not only the science-tool calls that fed it.
+- **34 new tests** (`tests/test_qfoldit_watchlist_extensions.py` — 8, `tests/test_qfoldit_uag_bridge.py` — 9, `tests/test_qfoldit_experiment_record.py` — 9, `tests/test_qfoldit_scene_licensing_collection.py` — 8). **Total: 85/85 qFoldIT tests passing.**
+
+### Unreleased — qFoldIT Moved Into Its Own Folder + Real Science Pipeline Wired In
+
+- **Reorganized:** everything qFoldIT-related moved from loose files at the repo root into [`qfoldit/`](qfoldit/README.md) — `compliance/`, `science/` (with a new `pipelines/` subpackage), `monetization/`, each with its data file(s) next to the code that reads them. Runtime logs moved to `qfoldit/logs/`. All default file paths now resolve relative to the module's own location, not the process's CWD — matters because `mcp_server.py` may launch from inside the UEFN editor's own working directory.
+- **Real science pipeline added:** `qfoldit/science/pipelines/quantum_runner.py` (classical quantum-walk-inspired folding simulation, real NeRF backbone reconstruction, plus an import-guarded real CVaR-VQE wrapper) and `qfoldit/science/gamedesign.py` (deterministic game-design-document generator) — both pure-stdlib, ported from the original qFoldIT/Protein-Design-MCP repo. Exposed as three new MCP tools: `qfoldit_quantum_walk_fold`, `qfoldit_quantum_vqe_fold`, `qfoldit_generate_game_design`.
+- **Found and documented a real algorithmic limitation, not hidden:** `simulate_quantum_walk_fold`'s single-dihedral-angle Metropolis moves can leave chains of ~14+ residues kinetically trapped in a self-clashed conformation — confirmed by a dedicated test (`test_known_limitation_longer_chains_can_stay_kinetically_trapped`), documented in the function's own docstring.
+- **20 new tests** (`tests/test_qfoldit_quantum_runner.py` — 12, `tests/test_qfoldit_gamedesign.py` — 8, including a real end-to-end run through both modules together). **Total: 51/51 passing.**
 
 ### Unreleased — qFoldIT Trust & Compliance Layer Merged
 

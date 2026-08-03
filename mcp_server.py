@@ -59,6 +59,7 @@ License: AGPL-3.0 with visible attribution requirement (see LICENSE)
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -70,9 +71,13 @@ from typing import Any, Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from qfoldit_trust_runtime import TrustRuntime
-from qfoldit_science_mcp_registry import ScienceMCPRegistry
-from qfoldit_monetization_registry import MonetizationRegistry
+from qfoldit.compliance.trust_runtime import TrustRuntime
+from qfoldit.science.mcp_registry import ScienceMCPRegistry
+from qfoldit.monetization.monetization_registry import MonetizationRegistry
+from qfoldit.science.pipelines.quantum_runner import simulate_quantum_walk_fold, predict_peptide_quantum_vqe
+from qfoldit.science.gamedesign import generate_game_design
+from qfoldit.science.uag_bridge import to_uag_seed, validate_uag_seed
+from qfoldit.science.experiment_record import build_experiment_record, list_experiment_records
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -188,8 +193,14 @@ def _j(obj: Any) -> str:
 
 
 # ─── qFoldIT Trust & Compliance Runtime ────────────────────────────────────────
+# Everything qFoldIT-related now lives under qfoldit/ (compliance/, science/,
+# monetization/) instead of loose files at the repo root — see qfoldit/README.md.
 
-_QFOLDIT_DIR = os.path.dirname(os.path.abspath(__file__))
+_TOOLBELT_ROOT = os.path.dirname(os.path.abspath(__file__))
+_QFOLDIT_DIR = os.path.join(_TOOLBELT_ROOT, "qfoldit")
+_QFOLDIT_LOGS_DIR = os.path.join(_QFOLDIT_DIR, "logs")
+os.makedirs(_QFOLDIT_LOGS_DIR, exist_ok=True)
+_QFOLDIT_EXPERIMENT_RECORDS_PATH = os.path.join(_QFOLDIT_LOGS_DIR, "experiment_records.log.jsonl")
 
 
 def _detect_engine_version() -> str:
@@ -237,19 +248,19 @@ def _qfoldit_asset_metadata_fn(asset_ref: str) -> dict | None:
     return {"resolved_path": package_path, "plugin_id": mount}
 
 
-_trust = TrustRuntime(
-    manifest_path=os.path.join(_QFOLDIT_DIR, "license_manifest.json"),
+_trust = TrustRuntime.with_extended_watchlist(
+    manifest_path=os.path.join(_QFOLDIT_DIR, "compliance", "license_manifest.json"),
     engine_version=_detect_engine_version(),
-    audit_log_path=os.path.join(_QFOLDIT_DIR, "trust_audit.log.jsonl"),
+    audit_log_path=os.path.join(_QFOLDIT_LOGS_DIR, "trust_audit.log.jsonl"),
     asset_metadata_fn=_qfoldit_asset_metadata_fn,
 )
 _sci_registry = ScienceMCPRegistry(
-    registry_path=os.path.join(_QFOLDIT_DIR, "science_mcp_registry.json"),
-    connection_log_path=os.path.join(_QFOLDIT_DIR, "science_mcp_connections.log.jsonl"),
+    registry_path=os.path.join(_QFOLDIT_DIR, "science", "science_mcp_registry.json"),
+    connection_log_path=os.path.join(_QFOLDIT_LOGS_DIR, "science_mcp_connections.log.jsonl"),
 )
 _mon_registry = MonetizationRegistry(
-    channels_path=os.path.join(_QFOLDIT_DIR, "monetization_channels.json"),
-    commission_log_path=os.path.join(_QFOLDIT_DIR, "commission_ledger.log.jsonl"),
+    channels_path=os.path.join(_QFOLDIT_DIR, "monetization", "monetization_channels.json"),
+    commission_log_path=os.path.join(_QFOLDIT_LOGS_DIR, "commission_ledger.log.jsonl"),
     trust=_trust,
 )
 
@@ -411,6 +422,232 @@ def qfoldit_evaluate_commission(
             "note": d.cost_estimate.note,
         } if d.cost_estimate else None,
     }, indent=2)
+
+
+@mcp.tool()
+def qfoldit_quantum_walk_fold(
+    sequence: str,
+    steps: int = 500,
+    continuous_space: bool = True,
+    seed: int | None = None,
+) -> str:
+    """Run a real, classical quantum-walk-INSPIRED Metropolis simulation over
+    (phi, psi) torsion angles and return a genuine 3D backbone coordinate
+    tensor for a peptide sequence — for in-editor structural previews (e.g.
+    driving a facility-twin or level layout from a real folding trajectory).
+
+    HONESTY NOTE (read before treating this as "real quantum folding"): this
+    is a CLASSICAL simulation inspired by the QFold algorithm (Casares et
+    al., Quantum Sci. Technol. 7, 025013, 2022) — a biased random-walk
+    proposal distribution feeding a real Metropolis acceptance step and a
+    real NeRF backbone reconstruction. It does not run on a quantum circuit
+    simulator or quantum hardware. Treat the output as a lightweight
+    structural preview, not a substitute for actual QFold/IBMQ runs or
+    physical force-field refinement. For the real CVaR-VQE quantum backend
+    (requires the separate qupepfold/Qiskit stack), use
+    qfoldit_quantum_vqe_fold instead — it honestly reports 'unavailable'
+    rather than silently falling back to this classical approximation."""
+    ip_decision = _trust.evaluate(tool_name="qfoldit_quantum_walk_fold", kwargs={"sequence": sequence})
+    if not ip_decision.allowed:
+        return json.dumps({"status": "blocked", "reason": ip_decision.reason}, indent=2)
+
+    async def _run():
+        return await simulate_quantum_walk_fold(sequence, steps=steps, continuous_space=continuous_space, seed=seed)
+    result = asyncio.run(_run())
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+def qfoldit_quantum_vqe_fold(sequence: str, alpha: float = 0.1, shots: int = 1024) -> str:
+    """Estimate a low-energy peptide conformation using QuPepFold's real
+    CVaR-optimized Variational Quantum Eigensolver (Uttarkar et al., PLOS
+    ONE, 2026). This is the genuine quantum backend — but it requires the
+    separate 'qupepfold' package (Qiskit/Braket-dependent) that this
+    toolbelt's default Python environment does not ship. If unavailable,
+    returns status='unavailable' with an install_hint — NEVER a fabricated
+    energy value. Sequence should be short (~10 residues), the published
+    benchmark range for CVaR-VQE reliably reaching the ground state."""
+    ip_decision = _trust.evaluate(tool_name="qfoldit_quantum_vqe_fold", kwargs={"sequence": sequence})
+    if not ip_decision.allowed:
+        return json.dumps({"status": "blocked", "reason": ip_decision.reason}, indent=2)
+
+    async def _run():
+        return await predict_peptide_quantum_vqe(sequence, alpha=alpha, shots=shots)
+    result = asyncio.run(_run())
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+def qfoldit_generate_game_design(source_json: str, title: str | None = None, difficulty: str = "adaptive") -> str:
+    """Turn a qFoldIT science result (the JSON output of
+    qfoldit_quantum_walk_fold or qfoldit_quantum_vqe_fold, passed as a
+    string) into a structured, deterministic game design document — levels,
+    a par/scoring system, and achievements, ready to drive VR-lab level
+    layout. Same input always produces the same output (sha256-seeded, no
+    LLM call) so any level/score can be traced back to the exact number in
+    the source result that produced it. Does not itself spawn anything in
+    the editor — combine with run_toolbelt_tool for that."""
+    try:
+        source = json.loads(source_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"source_json is not valid JSON: {e}"}, indent=2)
+    doc = generate_game_design(source, title=title, difficulty=difficulty)
+    return json.dumps(doc, indent=2)
+
+
+@mcp.tool()
+def qfoldit_gamedesign_to_uag_seed(game_design_json: str) -> str:
+    """Bridge qfoldit_generate_game_design's output into a starter UAG
+    (Universal Assembly Graph) for the game-designer skill
+    (.claude/skills/game-designer/SKILL.md). Takes the JSON string
+    produced by qfoldit_generate_game_design and returns a minimal,
+    already-valid UAG with one 'group' node per level (par score,
+    checkpoint energy, and stars preserved in each node's properties)
+    plus a ready-made source_context string. This is a SKELETON, not a
+    finished scene — no meshes/lights/interactions are invented here.
+    Hand the result to the game-designer skill to design the actual
+    scene content for each level group."""
+    try:
+        doc = json.loads(game_design_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"game_design_json is not valid JSON: {e}"}, indent=2)
+    uag = to_uag_seed(doc)
+    check = validate_uag_seed(uag)
+    return json.dumps({"uag": uag, "validation": check}, indent=2)
+
+
+@mcp.tool()
+def qfoldit_scene_build_start() -> str:
+    """Return a timestamp marker to scope licensing collection to one
+    scene-building sequence. Call this once BEFORE unreal-world-builder
+    starts placing objects for a UAG, keep the `since_ts` value it
+    returns, then pass that same value as
+    `qfoldit_build_experiment_record`'s `auto_collect_licensing_since`
+    argument once the scene is finished — this is what lets the
+    resulting experiment record prove every object placed during that
+    build was checked, not just the science-tool calls."""
+    return json.dumps({"since_ts": _trust.now_ts()}, indent=2)
+
+
+@mcp.tool()
+def qfoldit_collect_scene_licensing(since_ts: str | None = None) -> str:
+    """Read TrustRuntime's own audit log back out as a JSON array of
+    licensing decisions (tool_name/allowed/matched_terms/reason),
+    filtered to run_toolbelt_tool calls (the ones that place actual
+    scene objects) and optionally to everything at or after `since_ts`
+    (get this from qfoldit_scene_build_start). Every entry here is a
+    real decision TrustRuntime already made and logged — nothing is
+    re-derived or guessed. Feed the result directly into
+    qfoldit_build_experiment_record's licensing_decisions_json, or just
+    use that tool's auto_collect_licensing_since shortcut instead of
+    calling this separately."""
+    decisions = _trust.decisions_since(since_ts=since_ts, tool_name="run_toolbelt_tool")
+    return json.dumps(decisions, indent=2)
+
+
+@mcp.tool()
+def qfoldit_list_experiment_records(limit: int = 20) -> str:
+    """List the most recently built experiment records (from
+    qfoldit_build_experiment_record, which persists every record it
+    builds to qfoldit/logs/experiment_records.log.jsonl automatically).
+    Read-only — same pattern as qfoldit_trust_dashboard. Returns []
+    (not an error) if no records have been built yet."""
+    records = list_experiment_records(_QFOLDIT_EXPERIMENT_RECORDS_PATH, limit=limit)
+    return json.dumps(records, indent=2)
+
+
+@mcp.tool()
+def qfoldit_build_experiment_record(
+    science_result_json: str,
+    science_source_kind: str,
+    reproduce_with_json: str,
+    game_design_seed: str | None = None,
+    uag_metadata_json: str | None = None,
+    licensing_decisions_json: str | None = None,
+    auto_collect_licensing_since: str | None = None,
+) -> str:
+    """Assemble a reproducible, licensing-cleared, publication-honest
+    ExperimentRecord from qFoldIT results already produced in this
+    session — this is the tool that operationalizes "gameplay as a
+    reproducible scientific experiment," now covering every scene
+    object's licensing decision, not just science-tool calls. Every
+    built record is automatically appended to
+    qfoldit/logs/experiment_records.log.jsonl (see
+    qfoldit_list_experiment_records) so it survives past this one
+    response.
+
+    Args:
+        science_result_json: The JSON string output of
+            qfoldit_quantum_walk_fold or qfoldit_quantum_vqe_fold.
+        science_source_kind: "quantum_walk_fold" or "quantum_vqe" —
+            must match which of the two produced science_result_json,
+            since this controls which citation/quantum-vs-classical
+            disclosure gets attached (see experiment_record.py's
+            _METHOD_CITATIONS — an unrecognized kind gets a visible
+            placeholder, never a guessed citation).
+        reproduce_with_json: JSON object of the exact function name +
+            parameters (including any seed) needed to regenerate
+            science_result_json byte-for-byte, e.g.
+            '{"function": "simulate_quantum_walk_fold", "sequence": "ACDE",
+              "steps": 200, "seed": 42}'. Required for the
+            publication_checklist's reproducibility check to pass.
+        game_design_seed: Optional — the "seed" field from a prior
+            qfoldit_generate_game_design call's output.
+        uag_metadata_json: Optional — the JSON string of a prior
+            qfoldit_gamedesign_to_uag_seed call's uag["metadata"].
+        licensing_decisions_json: Optional — JSON array of
+            hand-supplied licensing decisions, each shaped like
+            {"tool_name": ..., "allowed": ..., "matched_terms": [...],
+            "reason": ...}. Merged with anything auto-collected below,
+            not replaced by it.
+        auto_collect_licensing_since: Optional — a `since_ts` value
+            from qfoldit_scene_build_start. When given, this tool
+            automatically pulls every run_toolbelt_tool licensing
+            decision made since that marker (via
+            TrustRuntime.decisions_since) and includes them alongside
+            whatever's in licensing_decisions_json — this is what
+            proves every game object placed while building the scene
+            was checked, without the caller having to copy decisions
+            by hand.
+
+    Returns a JSON object with the full record plus a precomputed
+    methods_section (citation-grounded prose) and publication_checklist
+    (named boolean checks — never a bare "ready"/"not ready" verdict)."""
+    try:
+        science_result = json.loads(science_result_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"science_result_json is not valid JSON: {e}"}, indent=2)
+    try:
+        reproduce_with = json.loads(reproduce_with_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"reproduce_with_json is not valid JSON: {e}"}, indent=2)
+    uag_metadata = None
+    if uag_metadata_json:
+        try:
+            uag_metadata = json.loads(uag_metadata_json)
+        except json.JSONDecodeError as e:
+            return json.dumps({"status": "error", "error": f"uag_metadata_json is not valid JSON: {e}"}, indent=2)
+    licensing_decisions: list[dict[str, Any]] = []
+    if licensing_decisions_json:
+        try:
+            licensing_decisions.extend(json.loads(licensing_decisions_json))
+        except json.JSONDecodeError as e:
+            return json.dumps({"status": "error", "error": f"licensing_decisions_json is not valid JSON: {e}"}, indent=2)
+    if auto_collect_licensing_since is not None:
+        licensing_decisions.extend(
+            _trust.decisions_since(since_ts=auto_collect_licensing_since, tool_name="run_toolbelt_tool")
+        )
+
+    record = build_experiment_record(
+        science_result=science_result,
+        science_source_kind=science_source_kind,
+        game_design_seed=game_design_seed,
+        uag_metadata=uag_metadata,
+        licensing_decisions=licensing_decisions or None,
+        reproduce_with=reproduce_with,
+        persist_path=_QFOLDIT_EXPERIMENT_RECORDS_PATH,
+    )
+    return json.dumps(record, indent=2)
 
 
 # ─── Toolbelt bridge (the killer feature) ─────────────────────────────────────

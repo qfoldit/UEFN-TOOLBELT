@@ -3,7 +3,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from qfoldit_science_mcp_registry import ScienceMCPRegistry  # noqa: E402
+from qfoldit.science.mcp_registry import ScienceMCPRegistry  # noqa: E402
 
 
 def _fresh():
