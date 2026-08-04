@@ -51,6 +51,34 @@ qfoldit/
                              ../.claude/skills/game-designer/. Produces a
                              skeleton (one 'group' node per level, no
                              meshes/lights invented), not a finished scene.
+    presets.py               LEVEL PRESETS catalog — TEN named recipes on top
+                             of gamedesign.py, one per science domain:
+                             fold_marathon, quantum_boss, quantum_lab,
+                             hp_lattice_challenge, safety_gauntlet,
+                             plant_growth_garden, oilgas_corrosion_watch,
+                             meor_recovery_run, mining_bioleach_challenge,
+                             prospecting_survey. Each preset names its
+                             canonical/"reference" MCP server from
+                             science_mcp_registry.json (only status=verified/
+                             connected entries qualify — protein_design_mcp,
+                             boltz_api, plus 7 new qfoldit-skills-plugin
+                             entries added alongside this module; best_effort/
+                             reference_only entries are never silently
+                             promoted) and a live reachability check via
+                             ScienceMCPRegistry. Never fabricates a source
+                             result — raises PresetSourceRequiredError
+                             instead. The arena finale (round-based
+                             multiplayer, realized in UEFN via uefn_toolbelt)
+                             is deliberately kept OUT of the ten (see
+                             build_arena_finale/describe_arena_finale) since
+                             it isn't a science domain. build_universal_level()
+                             stitches every one of the ten presets present in a
+                             {preset_key: source} dict — plus, optionally, the
+                             arena finale — into one sequential,
+                             deterministically-seeded "Universal Level"
+                             (renumbered levels, namespaced achievement ids, a
+                             segments manifest of what was/wasn't included and
+                             why).
     experiment_record.py     ExperimentRecord — ties one run's science
                              result + TrustRuntime licensing decisions +
                              game-design seed + UAG metadata into one
@@ -138,6 +166,11 @@ references by name (see the `reference_only` entries in
 | `qfoldit_quantum_vqe_fold` | `science/pipelines/quantum_runner.py` (real VQE, import-guarded) |
 | `qfoldit_generate_game_design` | `science/gamedesign.py` |
 | `qfoldit_gamedesign_to_uag_seed` | `science/uag_bridge.py` — hands off to `.claude/skills/game-designer/` |
+| `qfoldit_list_level_presets` | `science/presets.py` — 10 named level recipes + live reference-MCP reachability |
+| `qfoldit_describe_arena_finale` | `science/presets.py` — the multiplayer finale, kept separate from the 10 |
+| `qfoldit_build_level_preset` | `science/presets.py` (`build_level`) — themed level from a real science result |
+| `qfoldit_build_arena_finale` | `science/presets.py` (`build_arena_finale`) — standalone multiplayer round |
+| `qfoldit_build_universal_level` | `science/presets.py` (`build_universal_level`) — all 10 presets (+ optional arena finale) stitched into one level |
 | `qfoldit_scene_build_start` | `compliance/trust_runtime.py` (`now_ts()`) — timestamp marker to bracket a scene build |
 | `qfoldit_collect_scene_licensing` | `compliance/trust_runtime.py` (`decisions_since()`) — read back real `run_toolbelt_tool` decisions |
 | `qfoldit_build_experiment_record` | `science/experiment_record.py` — reproducibility + licensing + publication-checklist record; persists to `logs/experiment_records.log.jsonl` |

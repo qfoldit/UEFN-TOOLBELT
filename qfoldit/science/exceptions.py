@@ -90,3 +90,24 @@ class ResourceNotFoundError(ProteinDesignError):
     """Raised when a requested resource is not found."""
 
     pass
+
+
+class PresetError(ProteinDesignError):
+    """Base for errors raised by science/presets.py's level-preset catalog."""
+
+    pass
+
+
+class PresetNotFoundError(PresetError):
+    """Raised when a preset key isn't in presets.PRESETS."""
+
+    pass
+
+
+class PresetSourceRequiredError(PresetError):
+    """Raised when build_level()/build_universal_level() is asked to build a
+    single_player preset with no source result supplied. presets.py never
+    fabricates a science result to fill the gap -- this error is the
+    documented alternative to silently inventing one."""
+
+    pass

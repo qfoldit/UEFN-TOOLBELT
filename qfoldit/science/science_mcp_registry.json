@@ -104,5 +104,75 @@
     "source": "mcp.boltz.bio/mcp",
     "requires_credentials": true,
     "notes": "Actually connected and OAuth-authorized in this session — paid runs, so gate any auto-triggered call behind an explicit cost estimate step (boltz_estimate_*) before boltz_start_*."
+  },
+  "qfoldit_quantum_lab": {
+    "name": "qfoldit-skills:qfoldit-quantum",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["classical statevector VQE simulation (2-4 qubits)", "molecular/spin Hamiltonian ground-state energy", "validated against exact diagonalization and the published H2/STO-3G benchmark (-1.1373 Hartree)"],
+    "source": "bundled Claude Skill plugin, local statevector simulation — no network call",
+    "requires_credentials": false,
+    "notes": "Bundled as a Claude Skill plugin rather than a standalone network MCP server; runs locally and deterministically. Distinct from protein_design_mcp's peptide-specific CVaR-VQE (QuPepFold) — this is general small-molecule/spin-Hamiltonian VQE. Treated as the canonical build for the 'quantum ground-state lab' domain on the strength of its own published-benchmark validation, same verified-status bar as protein_design_mcp."
+  },
+  "qfoldit_qfold_lab": {
+    "name": "qfoldit-skills:qfoldit-qfold",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["hybrid quantum-classical protein folding on the 2D HP (Dill, 1985) lattice model", "QAOA-style circuit on Amazon Braket LocalSimulator", "optional delegation to a full qFold MCP server when available"],
+    "source": "bundled Claude Skill plugin, Amazon Braket LocalSimulator — no network call unless delegating",
+    "requires_credentials": false,
+    "notes": "Bundled Claude Skill plugin, not a standalone network MCP server. NOT the same thing as simulate_quantum_walk_fold() in pipelines/quantum_runner.py -- that one is a classical Metropolis walk over continuous torsion angles; this is a QAOA circuit over the discrete HP lattice. Do not conflate the two when reporting results."
+  },
+  "qfoldit_plant_growth_lab": {
+    "name": "qfoldit-skills:qfoldit-plant-growth-model + qfoldit-l-systems",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["growth rate / morphology / deficiency-symptom estimation from NPK and light (PPFD, DLI, R:FR) inputs", "renders resulting morphology as a procedural L-system plant (SVG)"],
+    "source": "bundled Claude Skill plugins, local deterministic model — no network call",
+    "requires_credentials": false,
+    "notes": "Two skills paired for one preset: plant-growth-model produces the numeric growth/morphology/deficiency result, l-systems renders it. The exact output field names below (growth_rate, compactness, deficiency_symptoms) are a best-effort mapping from the skill's own public description, not independently inspected in this authoring session -- same 'documented-uncertainty' convention as quantum_runner.py's qupepfold wrapper note. Adjust presets.py's MetricSpec keys once the real schema is confirmed."
+  },
+  "qfoldit_oilgas_lab": {
+    "name": "qfoldit-skills:qfoldit-oilgas",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["internal CO2 (sweet) corrosion rate via the published de Waard-Milliams correlation", "protective-scale, flow/mass-transfer, salinity-pitting, and inhibitor-dosing adjustments", "remaining pipeline wall-life estimate"],
+    "source": "bundled Claude Skill plugin, local deterministic correlation — no network call",
+    "requires_credentials": false,
+    "notes": "Field names (corrosion_rate_mm_per_year, remaining_wall_life_years) are a best-effort mapping from the skill's public description, not independently inspected — same documented-uncertainty convention as above. Never fabricate a corrosion rate if the skill hasn't been run; presets.py refuses to build this level without a real result."
+  },
+  "qfoldit_meor_lab": {
+    "name": "qfoldit-skills:qfoldit-meor",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["bacterial growth / biosurfactant production / interfacial-tension reduction prediction", "incremental oil recovery via the capillary desaturation curve"],
+    "source": "bundled Claude Skill plugin, local deterministic model — no network call",
+    "requires_credentials": false,
+    "notes": "Field names (ift_reduction_pct, incremental_oil_recovery_pct) are a best-effort mapping from the skill's public description, not independently inspected -- documented-uncertainty convention as above."
+  },
+  "qfoldit_mining_lab": {
+    "name": "qfoldit-skills:qfoldit-mining",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["bio-oxidation of refractory sulfide gold ore (Shrinking Core Model, Arrhenius)", "biosorption-based metal recovery (Langmuir/Freundlich isotherms)", "cyanide biodegradation kinetics (pseudo-second-order, Aiba substrate-inhibition)"],
+    "source": "bundled Claude Skill plugin, local validated kinetic models — no network call",
+    "requires_credentials": false,
+    "notes": "Field names (biooxidation_extent_pct, cyanide_degradation_pct) are a best-effort mapping from the skill's public description, not independently inspected -- documented-uncertainty convention as above."
+  },
+  "qfoldit_prospecting_lab": {
+    "name": "qfoldit-skills:qfoldit-prospecting",
+    "provider": "qfoldit",
+    "license": "Apache-2.0",
+    "status": "verified",
+    "capabilities": ["16S/shotgun-metagenomic diversity indices (Chao1, inverse Simpson)", "indicator-taxon identification and response-ratio effect sizes", "anomaly scoring and hierarchical clustering", "permutation-based validity check for whether a signal could be due to chance"],
+    "source": "bundled Claude Skill plugin, local statistical analysis — no network call",
+    "requires_credentials": false,
+    "notes": "Field names (anomaly_score, permutation_p_value) are a best-effort mapping from the skill's public description, not independently inspected -- documented-uncertainty convention as above. The permutation p-value is the one number this preset treats as load-bearing for its 'statistically significant' achievement -- never lower that bar to make an achievement unlock more easily."
   }
 }

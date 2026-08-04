@@ -77,6 +77,14 @@ from qfoldit.monetization.monetization_registry import MonetizationRegistry
 from qfoldit.science.pipelines.quantum_runner import simulate_quantum_walk_fold, predict_peptide_quantum_vqe
 from qfoldit.science.gamedesign import generate_game_design
 from qfoldit.science.uag_bridge import to_uag_seed, validate_uag_seed
+from qfoldit.science.presets import (
+    list_presets as _list_level_presets,
+    describe_arena_finale as _describe_arena_finale,
+    build_level as _build_level_preset,
+    build_arena_finale as _build_arena_finale,
+    build_universal_level as _build_universal_level,
+)
+from qfoldit.science.exceptions import PresetError
 from qfoldit.science.experiment_record import build_experiment_record, list_experiment_records
 
 # ─── Configuration ────────────────────────────────────────────────────────────
@@ -514,6 +522,122 @@ def qfoldit_gamedesign_to_uag_seed(game_design_json: str) -> str:
     uag = to_uag_seed(doc)
     check = validate_uag_seed(uag)
     return json.dumps({"uag": uag, "validation": check}, indent=2)
+
+
+@mcp.tool()
+def qfoldit_list_level_presets() -> str:
+    """List qFoldIT's TEN named LEVEL PRESETS (science/presets.py) —
+    themed recipes on top of qfoldit_generate_game_design / a shared
+    domain-metrics builder, one per science domain: fold_marathon,
+    quantum_boss, quantum_lab, hp_lattice_challenge, safety_gauntlet,
+    plant_growth_garden, oilgas_corrosion_watch, meor_recovery_run,
+    mining_bioleach_challenge, prospecting_survey. Each entry names its
+    expected source shape and its canonical ("reference") MCP server
+    from science_mcp_registry.json, plus a LIVE reachability check for
+    that server this session. The arena finale (live UEFN multiplayer)
+    is NOT one of the ten — see qfoldit_describe_arena_finale. Presets
+    never fabricate a science result; see PRESETS[key].notes for what
+    each one actually expects."""
+    return json.dumps(_list_level_presets(), indent=2)
+
+
+@mcp.tool()
+def qfoldit_describe_arena_finale() -> str:
+    """Describe the arena finale (round-based multiplayer, realized in a
+    live UEFN session via uefn_toolbelt) — kept separate from the ten
+    science-domain presets since it isn't a science domain itself. Build
+    it with qfoldit_build_arena_finale, or let
+    qfoldit_build_universal_level append it automatically."""
+    return json.dumps(_describe_arena_finale(), indent=2)
+
+
+@mcp.tool()
+def qfoldit_build_level_preset(
+    preset_key: str,
+    source_json: str,
+    title: str | None = None,
+    difficulty: str | None = None,
+) -> str:
+    """Build one of the ten named preset levels (see
+    qfoldit_list_level_presets) from a real science result. `source_json`
+    must be the JSON string a real pipeline/skill already produced (see
+    PRESETS[preset_key].notes for the exact expected shape — e.g.
+    qfoldit_quantum_walk_fold's output for fold_marathon, or a
+    qfoldit-oilgas skill result for oilgas_corrosion_watch). Never
+    fabricates a result: an invalid/missing source returns
+    status='error' explaining what's expected rather than inventing
+    numbers. Returns the underlying level document plus which canonical
+    MCP server backs this preset and whether it's reachable right now."""
+    try:
+        source = json.loads(source_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"source_json is not valid JSON: {e}"}, indent=2)
+    try:
+        doc = _build_level_preset(preset_key, source, title=title, difficulty=difficulty)
+    except PresetError as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2)
+    return json.dumps(doc, indent=2)
+
+
+@mcp.tool()
+def qfoldit_build_arena_finale(
+    source_json: str | None = None,
+    title: str | None = None,
+    round_duration_seconds: int = 300,
+    team_count: int = 2,
+) -> str:
+    """Build the arena finale — a round-based multiplayer challenge
+    (gamedesign.generate_multiplayer_challenge), not one of the ten
+    science-domain presets. `source_json` is optional: omit it (or pass
+    an empty object) to get a challenge with objective=None rather than
+    a fabricated one."""
+    source = None
+    if source_json is not None:
+        try:
+            source = json.loads(source_json)
+        except json.JSONDecodeError as e:
+            return json.dumps({"status": "error", "error": f"source_json is not valid JSON: {e}"}, indent=2)
+    doc = _build_arena_finale(
+        source, title=title, round_duration_seconds=round_duration_seconds, team_count=team_count,
+    )
+    return json.dumps(doc, indent=2)
+
+
+@mcp.tool()
+def qfoldit_build_universal_level(
+    sources_json: str,
+    include_arena_finale: bool = True,
+    round_duration_seconds: int = 300,
+    team_count: int = 2,
+) -> str:
+    """Build the "Universal Level" that stitches all TEN qFoldIT level
+    presets into one continuous playthrough. `sources_json` must be a
+    JSON object mapping preset keys (fold_marathon, quantum_boss,
+    quantum_lab, hp_lattice_challenge, safety_gauntlet,
+    plant_growth_garden, oilgas_corrosion_watch, meor_recovery_run,
+    mining_bioleach_challenge, prospecting_survey) to the real result
+    dict each one produced — omit a key (or map it to null) to skip that
+    preset rather than fabricate its content; the returned `segments`
+    list records exactly which presets were included and which weren't,
+    each with its canonical-MCP reachability snapshot, plus the arena
+    finale segment if included. Deterministic: the same sources always
+    regenerate the same universal_seed."""
+    try:
+        sources = json.loads(sources_json)
+    except json.JSONDecodeError as e:
+        return json.dumps({"status": "error", "error": f"sources_json is not valid JSON: {e}"}, indent=2)
+    if not isinstance(sources, dict):
+        return json.dumps({"status": "error", "error": "sources_json must decode to a JSON object"}, indent=2)
+    try:
+        doc = _build_universal_level(
+            sources,
+            include_arena_finale=include_arena_finale,
+            round_duration_seconds=round_duration_seconds,
+            team_count=team_count,
+        )
+    except PresetError as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2)
+    return json.dumps(doc, indent=2)
 
 
 @mcp.tool()
