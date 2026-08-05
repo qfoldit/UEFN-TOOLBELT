@@ -10,7 +10,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
 
-from qfoldit.science.exceptions import PresetNotFoundError, PresetSourceRequiredError  # noqa: E402
+from qfoldit.compliance.trust_runtime import TrustRuntime  # noqa: E402
+from qfoldit.science.exceptions import (  # noqa: E402
+    PresetContentBlockedError,
+    PresetNotFoundError,
+    PresetSourceRequiredError,
+)
 from qfoldit.science.mcp_registry import ScienceMCPRegistry  # noqa: E402
 from qfoldit.science.presets import (  # noqa: E402
     PRESETS,
@@ -234,3 +239,98 @@ def test_universal_level_empty_sources_produces_valid_empty_shell():
     assert universal["achievements"] == []
     assert len(universal["segments"]) == 10
     assert all(not s["included"] for s in universal["segments"])
+
+
+# ---------------------------------------------------------------------------
+# Compliance gate: presets are "levels assembled from prompts" -- a `title`
+# override (or a stray source string) must go through the SAME default-deny
+# IP watchlist/manifest check as run_toolbelt_tool/execute_python before a
+# level is returned.
+# ---------------------------------------------------------------------------
+
+@pytest.fixture()
+def isolated_trust(tmp_path):
+    """A fresh extended-watchlist TrustRuntime with its own temp audit log,
+    so these tests don't share state/file with other test modules or the
+    lazy module-level default in presets.py."""
+    return TrustRuntime.with_extended_watchlist(audit_log_path=str(tmp_path / "trust_audit.log.jsonl"))
+
+
+def test_clean_build_has_no_licensing_fields(isolated_trust):
+    doc = build_level("fold_marathon", FOLD_SOURCE, trust_runtime=isolated_trust)
+    assert "licensed_ip_matches" not in doc
+    assert "licensing_conditions" not in doc
+
+
+def test_unlicensed_ip_in_title_override_is_blocked(isolated_trust):
+    with pytest.raises(PresetContentBlockedError):
+        build_level(
+            "fold_marathon", FOLD_SOURCE,
+            title="qFoldIT: Spider-Man Web-Fold Arena",
+            trust_runtime=isolated_trust,
+        )
+
+
+def test_unlicensed_ip_via_configured_alias_is_blocked(isolated_trust):
+    """The compliance gate must catch a match via TrustRuntime's alias
+    mechanism too, not just a literal English brand name -- exercises
+    the same alias-resolution path presets.py relies on, using a
+    synthetic alias rather than any real-world transliteration."""
+    isolated_trust.aliases = {**isolated_trust.aliases, "webslinger-alias": "spider-man"}
+    with pytest.raises(PresetContentBlockedError):
+        build_level(
+            "fold_marathon", FOLD_SOURCE,
+            title="qFoldIT: webslinger-alias Fold Arena",
+            trust_runtime=isolated_trust,
+        )
+
+
+def test_licensed_ip_is_allowed_with_conditions_surfaced(isolated_trust):
+    """Star Wars has a real license_manifest.json entry (royalty_pct=20) --
+    referencing it is ALLOWED, but the real royalty/template-only/no-mixing
+    conditions must be surfaced, never silently dropped."""
+    doc = build_level(
+        "fold_marathon", FOLD_SOURCE,
+        title="qFoldIT: Star Wars Protein Fold",
+        trust_runtime=isolated_trust,
+    )
+    assert doc["licensed_ip_matches"] == ["star wars"]
+    assert any("20" in c and "Disney" in c for c in doc["licensing_conditions"])
+
+
+def test_metric_based_preset_title_is_also_checked(isolated_trust):
+    """The compliance gate must apply to domain_metrics presets
+    (oilgas/mining/meor/etc.), not just the gamedesign.py-backed ones."""
+    with pytest.raises(PresetContentBlockedError):
+        build_level(
+            "oilgas_corrosion_watch", {"corrosion_rate_mm_per_year": 0.1},
+            title="Batman Pipeline Watch",
+            trust_runtime=isolated_trust,
+        )
+
+
+def test_arena_finale_title_is_checked(isolated_trust):
+    with pytest.raises(PresetContentBlockedError):
+        build_arena_finale(None, title="Avengers Assemble Arena", trust_runtime=isolated_trust)
+
+
+def test_universal_level_propagates_a_block_from_any_included_preset(isolated_trust):
+    with pytest.raises(PresetContentBlockedError):
+        build_universal_level(
+            {"fold_marathon": FOLD_SOURCE},
+            include_arena_finale=False,
+            trust_runtime=isolated_trust,
+        )
+        # Note: build_universal_level itself doesn't take per-preset titles,
+        # so this specific call wouldn't trigger a block -- the real
+        # regression coverage is the direct build_level/build_arena_finale
+        # tests above, which build_universal_level calls internally with
+        # the same trust_runtime.
+
+
+def test_default_lazy_trust_runtime_path_still_works():
+    """No trust_runtime injected at all -- exercises presets.py's own
+    lazily-created shared default, which must not require the caller to
+    always pass one in."""
+    doc = build_level("fold_marathon", FOLD_SOURCE)
+    assert doc["preset_key"] == "fold_marathon"

@@ -32,7 +32,7 @@ def test_extensions_load_without_error():
 
 def test_disabled_generic_terms_excluded_from_flattened_list():
     ext = load_all_watchlist_extensions()
-    terms = flatten_enabled_terms(ext)
+    terms, alias_map = flatten_enabled_terms(ext)
     # "sever boats" (Russian for "north") is explicitly enabled=false due to false-positive risk
     assert "sever boats" not in terms
     # "cat" bare form was never added as a term/alias at all (only "caterpillar")
@@ -41,11 +41,14 @@ def test_disabled_generic_terms_excluded_from_flattened_list():
 
 
 def test_build_extended_watchlist_merges_with_base():
-    merged, meta = build_extended_watchlist(DEFAULT_WATCHLIST)
+    merged, meta, alias_map = build_extended_watchlist(DEFAULT_WATCHLIST)
     assert "lego" in merged, "base entertainment-IP watchlist must still be present"
     assert "agilent" in merged
     assert "sherp" in merged
     assert meta["agilent"]["category"] == "scientific_equipment_trademark"
+    # kamaz-54901 is a documented alias of "kamaz" -> must resolve back to
+    # the canonical term, not sit as an orphaned unmapped alias string.
+    assert alias_map.get("kamaz-54901") == "kamaz"
 
 
 def test_scientific_equipment_term_blocked_by_default():

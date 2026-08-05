@@ -11,13 +11,30 @@ qfoldit/
     trust_runtime.py        TrustRuntime — default-deny IP watchlist/manifest
                              gate in front of run_toolbelt_tool/execute_python,
                              plus engine-backed asset provenance verification.
+                             Takes an optional `aliases: dict[str,str]` map
+                             (alias -> canonical term, e.g. an alternate
+                             spelling/transliteration -> its English manifest
+                             key); a match on either the canonical term OR any
+                             alias resolves to the SAME manifest entry. No
+                             aliases ship by default (English-only policy — see
+                             below); the mechanism exists so a project that
+                             needs it can populate `aliases=` itself. Matching
+                             is Unicode-aware, token-window based (not raw
+                             substring) so a short term can't false-positive
+                             inside an unrelated longer word.
     license_manifest.json   Documented brand license terms (LEGO, TMNT, Star
                              Wars, etc.) — royalty %, scope, content_plugin_ids.
+                             All six IP Partner brands now have real royalty_pct
+                             values (Walking Dead 12%, KPop Demon Hunters 15%,
+                             Star Wars 20%, verified against Epic's live Brand
+                             Rules pages) — none were left null.
     watchlist_loader.py     Optional extension loader — merges DEFAULT_WATCHLIST
                              with real-world trademark term sets from
-                             watchlists/*.json. Opt-in via
-                             TrustRuntime.with_extended_watchlist(); a plain
-                             TrustRuntime() is unaffected.
+                             watchlists/*.json, returning (terms, metadata,
+                             alias_map). Opt-in via
+                             TrustRuntime.with_extended_watchlist(), which
+                             threads alias_map into TrustRuntime(aliases=...);
+                             a plain TrustRuntime() is unaffected.
     watchlists/
       scientific_equipment_watchlist.json  Lab/analytical-equipment brands
                              (Thermo Fisher, Agilent, Danaher sub-brands,
@@ -25,17 +42,23 @@ qfoldit/
                              basis, no Epic IP Partner pathway exists for
                              these, so a match resolves to BLOCKED unless a
                              real creator_independent_license manifest entry
-                             is added.
+                             is added. English-only — matches on the
+                             manufacturer/brand name as written in English
+                             only (see the file's own _README: a prior
+                             revision's non-English aliases were removed by
+                             policy, so non-English-language references to
+                             these brands are not currently caught).
       vehicle_watchlist.json  Vehicle/heavy-equipment brands (amphibious ATVs,
                              articulated all-terrain vehicles, long-haul
                              trucks, construction equipment, passenger cars,
                              mining/tactical transport) — same
                              trademark/no-Epic-pathway basis. Several generic-
                              word brand names (e.g. words that collide with
-                             "north" or "gas" once transliterated) are
+                             ordinary dictionary words in other languages) are
                              documented but shipped 'enabled': false to avoid
-                             false-positive noise from ordinary words — see
-                             the file's _README before enabling them.
+                             false-positive noise — see the file's _README
+                             before enabling them. English-only, same policy
+                             note as scientific_equipment_watchlist.json above.
   science/
     mcp_registry.py         ScienceMCPRegistry — verified/connected/
                              best_effort/reference_only gate for which
@@ -78,7 +101,25 @@ qfoldit/
                              deterministically-seeded "Universal Level"
                              (renumbered levels, namespaced achievement ids, a
                              segments manifest of what was/wasn't included and
-                             why).
+                             why). COMPLIANCE GATE: presets are levels
+                             ASSEMBLED FROM PROMPTS — every build_level()/
+                             build_arena_finale() call runs its own generated
+                             text (title override, tagline, level/achievement
+                             text) through compliance/trust_runtime.py's SAME
+                             default-deny watchlist/manifest check as
+                             run_toolbelt_tool/execute_python, not just at
+                             final UEFN-placement time. An unlicensed universe/
+                             character/item reference raises
+                             PresetContentBlockedError
+                             instead of returning a built level; a genuinely
+                             licensed brand (real license_manifest.json entry)
+                             is allowed with its royalty/conditions attached as
+                             licensed_ip_matches/licensing_conditions — never
+                             silently dropped. Mandatory, no bypass flag. Uses
+                             a lazily-created shared TrustRuntime by default,
+                             or accepts an injected one (mcp_server.py passes
+                             its own `_trust` so the whole app shares one
+                             audit log).
     experiment_record.py     ExperimentRecord — ties one run's science
                              result + TrustRuntime licensing decisions +
                              game-design seed + UAG metadata into one
@@ -186,7 +227,11 @@ section for the full picture.
 
 ```bash
 cd UEFN-TOOLBELT-main
-python3 tests/test_qfoldit_trust_runtime.py         # 16/16
+python3 tests/test_qfoldit_trust_runtime.py         # 21/21 — includes alias-
+                                                      #   resolution tests
+                                                      #   (synthetic aliases;
+                                                      #   no non-English text
+                                                      #   ships in this repo)
 python3 tests/test_qfoldit_science_mcp_registry.py  # 7/7
 python3 tests/test_qfoldit_monetization_registry.py # 8/8
 python3 tests/test_qfoldit_quantum_runner.py         # 12/12 — includes the
@@ -208,6 +253,14 @@ python3 tests/test_qfoldit_experiment_record.py       # 9/9 — includes a real
 python3 tests/test_qfoldit_scene_licensing_collection.py  # 8/8 — audit-log
                                                       #   read-back + record
                                                       #   persistence
+python3 -m pytest tests/test_qfoldit_presets.py       # requires pytest (uses
+                                                      #   fixtures/parametrize,
+                                                      #   unlike the manual-
+                                                      #   runner files above) —
+                                                      #   10 presets, arena
+                                                      #   finale, universal
+                                                      #   level, and the IP
+                                                      #   compliance gate
 ```
 
 ## Main goal: gameplay as a reproducible scientific experiment

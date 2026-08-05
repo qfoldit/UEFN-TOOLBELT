@@ -8,7 +8,7 @@ WHAT A PRESET IS
 A LevelPreset is metadata, not a science engine: a title/tagline/
 difficulty for a theme, PLUS which capability it expects, PLUS which
 entry in science_mcp_registry.json is that domain's canonical /
-"reference" ("эталонная") build -- i.e. the one entry with status
+"reference" build -- i.e. the one entry with status
 "verified" or "connected" for that capability, as opposed to any
 "best_effort" (unverified community bridge) or "reference_only"
 (documentation-only) entry that might exist for something adjacent. From
@@ -86,7 +86,7 @@ import hashlib
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-from .exceptions import PresetNotFoundError, PresetSourceRequiredError
+from .exceptions import PresetContentBlockedError, PresetNotFoundError, PresetSourceRequiredError
 from .gamedesign import (
     _DIFFICULTY_PAR_TIGHTNESS,
     _seed_from_source,
@@ -95,6 +95,7 @@ from .gamedesign import (
     generate_multiplayer_challenge,
 )
 from .mcp_registry import ScienceMCPRegistry
+from ..compliance.trust_runtime import TrustRuntime
 
 Difficulty = Literal["story", "adaptive", "hardcore"]
 
@@ -133,7 +134,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "fold_marathon": LevelPreset(
         key="fold_marathon",
-        title="qFoldIT: Fold Marathon",
+        title="qFoldIT: Protein Folding Dynamics",
         tagline="Fold your way from chaos to a stable conformation, one Metropolis move at a time.",
         domain="protein folding (classical walk simulation)",
         expects_source_kind="quantum_walk_fold",
@@ -148,7 +149,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "quantum_boss": LevelPreset(
         key="quantum_boss",
-        title="qFoldIT: Quantum Boss -- Peptide Ground State",
+        title="qFoldIT: Quantum Peptide Folding (VQE)",
         tagline="Beat the quantum computer to the peptide's ground state.",
         domain="peptide ground-state search (CVaR-VQE)",
         expects_source_kind="quantum_vqe",
@@ -163,7 +164,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "quantum_lab": LevelPreset(
         key="quantum_lab",
-        title="qFoldIT: Quantum Lab -- Molecular Ground State",
+        title="qFoldIT: Quantum Chemistry & Molecular VQE",
         tagline="Drive a small molecule's Hamiltonian down to its true ground-state energy.",
         domain="general molecular/spin VQE (statevector simulation)",
         expects_source_kind="quantum_vqe",
@@ -179,7 +180,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "hp_lattice_challenge": LevelPreset(
         key="hp_lattice_challenge",
-        title="qFoldIT: HP Lattice Challenge",
+        title="qFoldIT: HP-Lattice Protein Folding (QAOA)",
         tagline="Pack the chain onto the lattice and maximize hydrophobic contacts.",
         domain="2D HP-lattice protein folding (QAOA)",
         expects_source_kind="domain_metrics",
@@ -199,7 +200,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "safety_gauntlet": LevelPreset(
         key="safety_gauntlet",
-        title="qFoldIT: Safety Trial Gauntlet",
+        title="qFoldIT: ADMET Toxicology & Drug Design",
         tagline="Clear every safety trial before your candidate molecule ships.",
         domain="ADMET / molecular safety screening",
         expects_source_kind="admet_profile",
@@ -214,7 +215,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "plant_growth_garden": LevelPreset(
         key="plant_growth_garden",
-        title="qFoldIT: Grow Lab Garden",
+        title="qFoldIT: PARAMETRIC L-SYSTEMS",
         tagline="Tune the light and nutrients until the plant thrives, then watch it render as a living L-system.",
         domain="plant growth / morphology (NPK + light response)",
         expects_source_kind="domain_metrics",
@@ -234,7 +235,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "oilgas_corrosion_watch": LevelPreset(
         key="oilgas_corrosion_watch",
-        title="qFoldIT: Pipeline Corrosion Watch",
+        title="qFoldIT: Pipeline Corrosion Engineering",
         tagline="Dose the inhibitor right and keep the corrosion rate below the line.",
         domain="pipeline CO2 (sweet) corrosion",
         expects_source_kind="domain_metrics",
@@ -253,7 +254,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "meor_recovery_run": LevelPreset(
         key="meor_recovery_run",
-        title="qFoldIT: MEOR Recovery Run",
+        title="qFoldIT: Microbial Enhanced Oil Recovery",
         tagline="Grow the right biosurfactant-producing culture and squeeze out the trapped oil.",
         domain="microbial enhanced oil recovery (MEOR)",
         expects_source_kind="domain_metrics",
@@ -271,7 +272,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "mining_bioleach_challenge": LevelPreset(
         key="mining_bioleach_challenge",
-        title="qFoldIT: Bioleach Challenge",
+        title="qFoldIT: Biomining & Bioleaching",
         tagline="Bio-oxidize the ore, recover the metal, and detoxify the tailings before discharge.",
         domain="bio-oxidation / biosorption / cyanide degradation",
         expects_source_kind="domain_metrics",
@@ -290,7 +291,7 @@ PRESETS: dict[str, LevelPreset] = {
 
     "prospecting_survey": LevelPreset(
         key="prospecting_survey",
-        title="qFoldIT: Biogeochemical Survey",
+        title="qFoldIT: Biogeochemical Mineral Prospecting",
         tagline="Find the microbial indicator signal that actually separates on-deposit from background.",
         domain="biogeochemical mineral-exploration prospecting",
         expects_source_kind="domain_metrics",
@@ -342,6 +343,93 @@ def _reference_note(preset: LevelPreset, registry: ScienceMCPRegistry) -> dict[s
         "reachable_now": reachable,
         "reason": reason,
     }
+
+
+# ---------------------------------------------------------------------------
+# Compliance gate. Presets are levels ASSEMBLED FROM PROMPTS -- a `title`
+# override, or a stray string value inside a `source` dict, is exactly as
+# capable of naming an unlicensed universe/character/item as anything typed
+# into run_toolbelt_tool/execute_python. Those two are always gated by
+# compliance/trust_runtime.py's default-deny watchlist/manifest check; a
+# level built here is no different just because it hasn't been placed in
+# UEFN yet -- the same text ends up as level/achievement titles that a
+# downstream skill (uag_bridge.py -> game-designer -> unreal-world-builder)
+# will turn into real scene/prop names. So every build_level()/
+# build_arena_finale() call runs its OWN generated text through
+# TrustRuntime.evaluate() before returning, not just at final placement
+# time. This is mandatory, not opt-in -- there is no bypass flag,
+# deliberately, matching the "default-deny, no silent escalation"
+# philosophy the rest of compliance/ already follows.
+# ---------------------------------------------------------------------------
+
+_default_trust_runtime: TrustRuntime | None = None
+
+
+def _get_default_trust_runtime() -> TrustRuntime:
+    """Lazily build ONE shared TrustRuntime (extended watchlist, so
+    Cyrillic/native-script aliases are covered too) the first time a
+    preset needs to compliance-check its own text and no caller-supplied
+    instance was given. Cached at module level so repeated preset builds
+    share one audit trail instead of spawning a fresh log file per call --
+    mirrors how mcp_server.py builds its own `_trust` once at import
+    time. Callers that already have a TrustRuntime (e.g. mcp_server.py's
+    `_trust`) should pass it in via the `trust_runtime=` parameter instead,
+    so the whole app shares a single audit log."""
+    global _default_trust_runtime
+    if _default_trust_runtime is None:
+        _default_trust_runtime = TrustRuntime.with_extended_watchlist()
+    return _default_trust_runtime
+
+
+def _collect_doc_text(doc: dict[str, Any]) -> str:
+    """Every free-text field in a built level document that could carry a
+    prompt- or source-controlled string -- title, tagline(s),
+    narrative_intro, and every level/achievement's title/description/
+    source_metric. Deliberately broad: the cost of scanning one extra
+    static field is nothing; the cost of missing the one field that
+    actually carries the injected text is a compliance gap."""
+    parts: list[str] = []
+    for key in ("title", "tagline", "preset_tagline", "narrative_intro", "difficulty_note"):
+        val = doc.get(key)
+        if isinstance(val, str):
+            parts.append(val)
+    for lvl in doc.get("levels", []):
+        parts.append(str(lvl.get("title", "")))
+        parts.append(str(lvl.get("description", "")))
+    for ach in doc.get("achievements", []):
+        parts.append(str(ach.get("title", "")))
+        parts.append(str(ach.get("description", "")))
+        parts.append(str(ach.get("source_metric", "")))
+    return " | ".join(p for p in parts if p)
+
+
+def _compliance_check(doc: dict[str, Any], *, context_label: str, trust_runtime: TrustRuntime | None) -> None:
+    """Run a built level document's own generated text through the SAME
+    default-deny gate as run_toolbelt_tool/execute_python. Mutates `doc`
+    in place on an ALLOWED-with-conditions decision (attaches
+    `licensing_conditions`/`licensed_ip_matches` so a real royalty/
+    template-only/no-mixing obligation surfaces to the caller instead of
+    silently disappearing) and raises PresetContentBlockedError on a
+    BLOCKED decision -- never returns a level whose own text references
+    an unlicensed universe/character/item.
+    """
+    trust = trust_runtime or _get_default_trust_runtime()
+    text = _collect_doc_text(doc)
+    if not text:
+        return
+    decision = trust.evaluate(f"qfoldit_preset:{context_label}", {"generated_text": text})
+    if not decision.allowed:
+        raise PresetContentBlockedError(
+            f"Preset '{context_label}' was not built: its own generated text "
+            f"matched watchlisted term(s) {decision.matched_terms} with no covering "
+            f"license_manifest.json entry. {decision.reason} If this is a genuinely "
+            f"licensed brand, add a real manifest entry rather than routing around "
+            f"this check; otherwise remove the reference (e.g. rephrase the title "
+            f"override) and rebuild."
+        )
+    if decision.matched_terms:
+        doc["licensed_ip_matches"] = decision.matched_terms
+        doc["licensing_conditions"] = decision.conditions
 
 
 def _build_metric_level(
@@ -485,6 +573,7 @@ def build_level(
     title: str | None = None,
     difficulty: Difficulty | None = None,
     registry: ScienceMCPRegistry | None = None,
+    trust_runtime: TrustRuntime | None = None,
 ) -> dict[str, Any]:
     """
     Build one named preset level (one of the ten in PRESETS) from a real
@@ -494,20 +583,33 @@ def build_level(
         key: a PRESETS key (see list_presets()).
         source: the raw result dict a real pipeline/skill already
             produced. Always required -- never fabricated here.
-        title: overrides the preset's default title.
+        title: overrides the preset's default title. Presets are levels
+            ASSEMBLED FROM PROMPTS -- this override is exactly the kind
+            of free text compliance/trust_runtime.py exists to check, so
+            it (and every other generated text field) is scanned before
+            this function returns; see PresetContentBlockedError.
         difficulty: overrides the preset's default difficulty.
         registry: inject a ScienceMCPRegistry (mainly for tests); a
             fresh default one is used otherwise so reachability is
             always checked live.
+        trust_runtime: inject a TrustRuntime (e.g. mcp_server.py's own
+            shared `_trust` instance, so the whole app logs to one audit
+            trail); a lazily-created shared default is used otherwise.
 
     Returns:
         The underlying gamedesign document (or domain-metrics document)
         dict, with `preset_key`, `preset_tagline`, and `reference` (this
-        preset's canonical-MCP reachability snapshot) added.
+        preset's canonical-MCP reachability snapshot) added. If the
+        generated text matched a LICENSED brand (e.g. a manifest entry
+        with a royalty_pct), `licensed_ip_matches` and
+        `licensing_conditions` are attached too -- surfaced, never
+        silently dropped.
 
     Raises:
         PresetNotFoundError: unknown key.
         PresetSourceRequiredError: source is None.
+        PresetContentBlockedError: the built level's own text matched a
+            watchlisted term with no covering manifest entry.
     """
     preset = get_preset(key)
     registry = registry or ScienceMCPRegistry()
@@ -538,6 +640,7 @@ def build_level(
     doc["preset_key"] = preset.key
     doc["preset_tagline"] = preset.tagline
     doc["reference"] = reference
+    _compliance_check(doc, context_label=key, trust_runtime=trust_runtime)
     return doc
 
 
@@ -548,13 +651,16 @@ def build_arena_finale(
     registry: ScienceMCPRegistry | None = None,
     round_duration_seconds: int = 300,
     team_count: int = 2,
+    trust_runtime: TrustRuntime | None = None,
 ) -> dict[str, Any]:
     """
     Build the arena finale -- a round-based multiplayer challenge, not
     one of the ten domain presets (see module docstring). `source` is
     optional: an empty/partial one just means
     generate_multiplayer_challenge() reports objective=None rather than a
-    fabricated one (see its own docstring).
+    fabricated one (see its own docstring). Same compliance gate as
+    build_level() -- `title` and any source-derived text are scanned
+    before this function returns; see PresetContentBlockedError.
     """
     registry = registry or ScienceMCPRegistry()
     reference = _reference_note(_ARENA_PRESET, registry)
@@ -567,6 +673,7 @@ def build_arena_finale(
     challenge["preset_key"] = _ARENA_PRESET.key
     challenge["preset_tagline"] = _ARENA_PRESET.tagline
     challenge["reference"] = reference
+    _compliance_check(challenge, context_label=_ARENA_KEY, trust_runtime=trust_runtime)
     return challenge
 
 
@@ -577,6 +684,7 @@ def build_universal_level(
     include_arena_finale: bool = True,
     round_duration_seconds: int = 300,
     team_count: int = 2,
+    trust_runtime: TrustRuntime | None = None,
 ) -> dict[str, Any]:
     """
     Build the "level uniting all presets": every one of the ten presets
@@ -596,6 +704,11 @@ def build_universal_level(
         include_arena_finale: whether to append the arena finale as a
             closing segment.
         round_duration_seconds, team_count: passed to the arena finale.
+        trust_runtime: inject a TrustRuntime, forwarded to every
+            build_level()/build_arena_finale() call this makes so the
+            whole Universal Level shares one compliance audit trail.
+            Same default-deny gate as those two -- see
+            PresetContentBlockedError.
 
     Returns:
         A dict with: title, tagline, universal_seed (sha256 of the
@@ -606,6 +719,14 @@ def build_universal_level(
         the ten presets considered, included or not, each with its own
         reference-MCP reachability snapshot, plus the arena finale
         segment if included).
+
+    Raises:
+        PresetContentBlockedError: any included preset's (or the arena
+            finale's) own generated text matched a watchlisted term with
+            no covering manifest entry -- propagated as-is from
+            build_level()/build_arena_finale() rather than caught and
+            silently dropping just that one segment, since a level built
+            from a partially-blocked run is not a level you should ship.
     """
     registry = registry or ScienceMCPRegistry()
     segments: list[dict[str, Any]] = []
@@ -628,7 +749,7 @@ def build_universal_level(
             })
             continue
 
-        doc = build_level(key, source, registry=registry)
+        doc = build_level(key, source, registry=registry, trust_runtime=trust_runtime)
         seeds.append(doc["seed"])
 
         renumbered: list[dict[str, Any]] = []
@@ -670,6 +791,7 @@ def build_universal_level(
             registry=registry,
             round_duration_seconds=round_duration_seconds,
             team_count=team_count,
+            trust_runtime=trust_runtime,
         )
         seeds.append(arena_finale["seed"])
         segments.append({

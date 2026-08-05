@@ -179,6 +179,7 @@ class TrustRuntime:
         ),
         asset_metadata_fn: "Callable[[str], dict[str, Any] | None] | None" = None,
         watchlist_metadata: "dict[str, dict[str, Any]] | None" = None,
+        aliases: "dict[str, str] | None" = None,
     ):
         self.manifest_path = manifest_path or self._DEFAULT_MANIFEST_PATH
         self.engine_version = engine_version
@@ -186,6 +187,18 @@ class TrustRuntime:
         self.watchlist = [w.lower() for w in (watchlist or DEFAULT_WATCHLIST)]
         self.epic_native_prefixes = epic_native_namespace_prefixes
         self.manifest: dict[str, ManifestEntry] = self._load_manifest()
+        # alias_lowercase -> canonical_lowercase (must match a manifest key
+        # or watchlist term). Populated automatically by
+        # with_extended_watchlist()/build_extended_watchlist() from each
+        # watchlist file's own "aliases" list (which may include
+        # qualified-form English aliases AND native-script forms, e.g. a
+        # Cyrillic spelling, side by side in the same list) — a match on
+        # any alias reports back as the canonical term so it resolves to
+        # the same manifest entry / same watchlist_metadata category
+        # regardless of language or script. Empty by default: a plain
+        # TrustRuntime() with no aliases behaves exactly as before this
+        # field existed.
+        self.aliases = {k.lower(): v.lower() for k, v in (aliases or {}).items()}
         # Optional {term: {"category": ..., "rightsholder": ..., ...}} lookup
         # from qfoldit.compliance.watchlist_loader — populated only when the
         # caller opts in via TrustRuntime.with_extended_watchlist() or by
@@ -224,9 +237,10 @@ class TrustRuntime:
         """
         from .watchlist_loader import build_extended_watchlist  # local import: avoid a hard dependency for callers who never use this
 
-        merged_terms, metadata = build_extended_watchlist(DEFAULT_WATCHLIST, directory=watchlists_dir)
+        merged_terms, metadata, alias_map = build_extended_watchlist(DEFAULT_WATCHLIST, directory=watchlists_dir)
         kwargs.setdefault("watchlist", merged_terms)
         kwargs.setdefault("watchlist_metadata", metadata)
+        kwargs.setdefault("aliases", alias_map)
         return cls(**kwargs)
 
     # -- manifest -------------------------------------------------------
@@ -256,29 +270,72 @@ class TrustRuntime:
         presence (it's in your project)."""
         return any(prefix.lower() in text.lower() for prefix in self.epic_native_prefixes)
 
-    @staticmethod
-    def _normalize(s: str) -> str:
-        # Strip anything that isn't a letter/digit so "Spider-Man",
-        # "spiderman", and "SPIDER_MAN" all normalize the same way.
-        # Uses \w (Unicode-aware in Python 3 str patterns), NOT a bare
-        # a-z0-9 character class — an ASCII-only class would silently
-        # strip every character out of a non-Latin term (e.g. Cyrillic
-        # "Kamaz" written in its native Cyrillic form), reducing it to "",
-        # and an empty string is a substring
-        # of everything, which would make that term match every single
-        # call. This bit for real when Cyrillic vehicle-brand terms were
-        # added to a watchlist extension — see
-        # tests/test_qfoldit_watchlist_extensions.py.
-        # This is still a blunt instrument (no stemming, no fuzzy/typo
-        # matching) — treat it as a first-pass trigger, not a guarantee.
-        return re.sub(r"[\W_]", "", s.lower(), flags=re.UNICODE)
+    _TOKEN_SPLIT_RE = re.compile(r"[\W_]+", re.UNICODE)
+    _CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+    @classmethod
+    def _tokenize(cls, s: str) -> list[str]:
+        # Unicode-aware (\w covers Cyrillic and other scripts, not just
+        # ASCII a-z0-9) AND token-boundary rather than raw substring, on
+        # top of the existing Unicode-safety fix above (which prevented an
+        # empty-normalize-matches-everything bug for non-Latin terms, but
+        # still allowed a short bare term like "ford" to match inside an
+        # unrelated word like "affordable"). Explicitly splits on
+        # underscore too — \W alone treats "_" as a non-word char already,
+        # so this is consistent with the existing _normalize's [\W_]
+        # pattern, just token-aware instead of substring-aware. camelCase
+        # transitions get a boundary inserted before lowercasing, so
+        # "LegoStyle" still splits into "lego"+"style" the same way
+        # "Lego_Style" would.
+        spaced = cls._CAMEL_BOUNDARY_RE.sub(" ", s)
+        return [t for t in cls._TOKEN_SPLIT_RE.split(spaced.lower()) if t]
 
     def _find_watchlist_matches(self, text: str) -> list[str]:
-        text_n = self._normalize(text)
-        return [
-            term for term in self.watchlist
-            if self._normalize(term) and self._normalize(term) in text_n
-        ]
+        """Token-window matching against self.watchlist, PLUS
+        self.aliases (e.g. a Cyrillic spelling mapped to its canonical
+        English term) — a match on an alias reports back as the
+        CANONICAL term, so it resolves to the same manifest entry /
+        same watchlist_metadata category regardless of which
+        language/script the call used.
+
+        IMPORTANT: this also covers the case where the alias text is
+        ITSELF present as a literal entry in self.watchlist (true for
+        every extension-loaded alias, since flatten_enabled_terms adds
+        aliases to the flat term list for backward-compatible matching
+        AND records them in the alias map). Without the
+        `self.aliases.get(term, term)` canonicalization below, that
+        literal match would report the raw alias string (e.g. a Cyrillic
+        spelling of a brand name) as the match instead of the canonical term ('lego') — and since
+        several callers below use matches[0] as `manifest_entry`, that
+        would surface the alias text where a manifest.json key is
+        expected, defeating the whole point of this feature for exactly
+        the case (alias present in both the flat list and the alias
+        map) it exists to handle."""
+        tokens = self._tokenize(text)
+
+        def _term_matches(term_tokens: list[str]) -> bool:
+            if not term_tokens:
+                return False
+            term_concat = "".join(term_tokens)
+            max_window = len(term_tokens)
+            for i in range(len(tokens)):
+                for w in range(1, max_window + 1):
+                    if i + w > len(tokens):
+                        break
+                    if "".join(tokens[i:i + w]) == term_concat:
+                        return True
+            return False
+
+        matches = []
+        for term in self.watchlist:
+            if _term_matches(self._tokenize(term)):
+                canonical = self.aliases.get(term, term)
+                if canonical not in matches:
+                    matches.append(canonical)
+        for alias, canonical in self.aliases.items():
+            if _term_matches(self._tokenize(alias)) and canonical not in matches:
+                matches.append(canonical)
+        return matches
 
     # -- provenance (real, engine-backed — not just text) -------------------
 

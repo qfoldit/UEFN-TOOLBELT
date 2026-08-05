@@ -191,6 +191,80 @@ def test_manifest_entry_blocked_when_plugin_id_does_not_match():
     assert d.provenance_method == "engine_mismatch"
 
 
+def test_alias_resolves_to_canonical_manifest_entry():
+    """A match on an alias (e.g. an alternate spelling/transliteration of
+    a brand name) must resolve to the SAME manifest entry as the
+    canonical English term — not fall through as a phantom unmatched
+    term just because a different spelling was used. 'brikko' here is a
+    synthetic stand-in alias, not a real brand spelling."""
+    t = _fresh_runtime()
+    t.aliases = {"brikko": "lego"}
+    d = t.evaluate("execute_python", {"code": 'spawn_prop("assemble a brikko minifigure")'})
+    assert d.allowed is True
+    assert d.manifest_entry == "lego"
+
+
+def test_alias_blocks_unlicensed_brand_same_as_canonical_would():
+    t = _fresh_runtime()
+    t.watchlist = t.watchlist + ["tesla motors"]
+    t.aliases = {"teslamotorz": "tesla motors"}
+    d = t.evaluate("execute_python", {"code": 'spawn_prop("teslamotorz model for the garage")'})
+    assert d.allowed is False
+    assert "tesla motors" in d.matched_terms
+
+
+def test_unrelated_text_with_an_alias_configured_passes_cleanly():
+    t = _fresh_runtime()
+    t.aliases = {"brikko": "lego"}
+    d = t.evaluate("execute_python", {"code": 'spawn_prop("an ordinary laboratory flask")'})
+    assert d.allowed is True
+    assert d.matched_terms == []
+
+
+def test_extended_watchlist_alias_resolves_through_real_loader():
+    """End-to-end: with_extended_watchlist() must thread its alias_map
+    into TrustRuntime so a documented alias (e.g. 'kamaz-54901') would
+    resolve to its canonical term 'kamaz' if that brand ever gets a real
+    manifest entry -- verifies the fix to the latent flatten_enabled_terms
+    bug, not just the aliases= constructor kwarg in isolation."""
+    t = TrustRuntime.with_extended_watchlist(
+        manifest_path="does_not_exist.json",
+        audit_log_path=tempfile.mkstemp(suffix=".jsonl")[1],
+    )
+    assert t.aliases.get("kamaz-54901") == "kamaz"
+    d = t.evaluate("execute_python", {"code": 'import_asset("kamaz-54901_truck_mesh")'})
+    assert d.allowed is False
+    assert "kamaz" in d.matched_terms
+
+
+def test_manifest_entry_is_canonical_even_when_alias_is_also_a_flattened_watchlist_term():
+    """Regression test: an extension watchlist's aliases get added to
+    BOTH the flat watchlist AND the alias map by
+    flatten_enabled_terms/build_extended_watchlist -- so a literal match
+    on the alias text must still canonicalize before it becomes
+    `manifest_entry`, not just when the alias is matched via the
+    self.aliases loop alone. Without this, manifest_entry would surface
+    the raw alias string where a license_manifest.json key ('lego') is
+    expected, breaking every downstream royalty/conditions lookup for
+    exactly the aliased-brand case this mechanism exists to support.
+    Uses a synthetic in-memory extension (not a real watchlist file) so
+    this test doesn't depend on which aliases happen to ship in
+    watchlists/*.json."""
+    from qfoldit.compliance.watchlist_loader import flatten_enabled_terms
+
+    fake_extension = {"lego": {"aliases": ["brikko"], "enabled": True}}
+    terms, alias_map = flatten_enabled_terms(fake_extension)
+    t = TrustRuntime.with_extended_watchlist(audit_log_path=tempfile.mkstemp(suffix=".jsonl")[1])
+    t.watchlist = list(dict.fromkeys([*t.watchlist, *terms]))
+    t.aliases = {**t.aliases, **alias_map}
+    assert "brikko" in t.watchlist  # the alias really is flattened into the literal term list
+    assert t.aliases.get("brikko") == "lego"  # and also recorded as an alias
+    d = t.evaluate("execute_python", {"code": 'spawn_prop("assemble a brikko minifigure")'})
+    assert d.allowed is True
+    assert d.manifest_entry == "lego"  # canonical manifest key, never the raw alias text
+    assert d.matched_terms == ["lego"]  # deduplicated to the canonical form only
+
+
 def _run_all():
     tests = [v for k, v in globals().items() if k.startswith("test_") and callable(v)]
     failed = 0

@@ -1,16 +1,16 @@
-# Universal Assembly Graph (UAG) — схема v0.1
+# Universal Assembly Graph (UAG) — schema v0.1
 
-UAG — это engine-neutral JSON-описание сцены/взаимодействия, которое `game-designer` производит один раз, а каждый движковый skill (`unreal-world-builder`, `unity-experience-builder`, `unigine-simulation-engineer`, `openusd-architect`, `apple-spatial-designer`, `threejs-web-designer`) переводит в родные примитивы своего движка. Это не стандарт индустрии — это внутренний формат qFoldIT, спроектированный, чтобы избежать переписывания логики сцены 6 раз под 6 движков.
+UAG is an engine-neutral JSON description of a scene/interaction, produced once by `game-designer`, which each engine-specific skill (`unreal-world-builder`, `unity-experience-builder`, `unigine-simulation-engineer`, `openusd-architect`, `apple-spatial-designer`, `threejs-web-designer`) translates into its own engine's native primitives. This is not an industry standard — it's qFoldIT's own internal format, designed to avoid rewriting the same scene logic six times for six different engines.
 
-## Структура
+## Structure
 
 ```json
 {
   "uag_version": "0.1",
   "metadata": {
-    "name": "МАС Снежинка — оранжерея",
-    "description": "string, человеко-читаемое описание сцены",
-    "source_context": "например: 'plant-growth скилл, результат для NPK-дефицита K'"
+    "name": "MAS Snowflake — greenhouse",
+    "description": "string, human-readable description of the scene",
+    "source_context": "e.g.: 'plant-growth skill, result for NPK potassium deficiency'"
   },
   "nodes": [
     {
@@ -22,11 +22,11 @@ UAG — это engine-neutral JSON-описание сцены/взаимоде�
         "scale": [1.0, 1.0, 1.0]
       },
       "properties": {
-        "mesh_ref": "опционально: путь/имя ассета, если type=mesh",
-        "color": "опционально, hex или engine-agnostic имя",
-        "intensity": "опционально, для light"
+        "mesh_ref": "optional: asset path/name, if type=mesh",
+        "color": "optional, hex or engine-agnostic name",
+        "intensity": "optional, for light"
       },
-      "parent_id": "id родителя или null"
+      "parent_id": "parent's id or null"
     }
   ],
   "connections": [
@@ -51,31 +51,31 @@ UAG — это engine-neutral JSON-описание сцены/взаимоде�
       "id": "string",
       "trigger": "on_grab | on_proximity | on_gaze | on_click | on_timer",
       "target_node": "id",
-      "action": "engine-agnostic текстовое описание того, что должно произойти"
+      "action": "engine-agnostic text description of what should happen"
     }
   ]
 }
 ```
 
-## Принцип: UAG не знает про движки
+## Principle: UAG doesn't know about engines
 
-Ни одно поле UAG не должно содержать имя класса конкретного движка (`UStaticMeshComponent`, `GameObject`, `Entity`, `<mesh>` и т.д.) — это обязанность движкового skill'а при экспорте. Если в UAG проникает движко-специфичная деталь, это сигнал, что она должна была быть в `properties` конкретного узла в engine-agnostic форме, а маппинг — на стороне адаптера.
+No UAG field should contain a concrete engine's class name (`UStaticMeshComponent`, `GameObject`, `Entity`, `<mesh>`, etc.) — that's the engine-specific skill's job at export time. If an engine-specific detail leaks into UAG, that's a signal it should have been in that node's `properties` in engine-agnostic form instead, with the mapping handled on the adapter's side.
 
-## Таблица маппинга (для авторов движковых skills)
+## Mapping table (for authors of engine-specific skills)
 
-| UAG-концепция | Unreal | Unity | Unigine | OpenUSD | RealityKit | Three.js/R3F |
+| UAG concept | Unreal | Unity | Unigine | OpenUSD | RealityKit | Three.js/R3F |
 |---|---|---|---|---|---|---|
 | `node type=mesh` | StaticMeshActor | GameObject + MeshRenderer | ObjectMeshStatic | Xform + Mesh prim | Entity + ModelComponent | `<mesh>` |
-| `node type=light` | PointLight/DirectionalLight актор | GameObject + Light | LightWorld/LightPoint | Xform + UsdLuxLight | Entity + PointLight/DirectionalLight | `<pointLight>`/`<directionalLight>` |
+| `node type=light` | PointLight/DirectionalLight actor | GameObject + Light | LightWorld/LightPoint | Xform + UsdLuxLight | Entity + PointLight/DirectionalLight | `<pointLight>`/`<directionalLight>` |
 | `connection type=parent_child` | Attach to component | Transform.SetParent | Node.setParent | Prim hierarchy (SdfPath) | Entity.addChild | React children |
 | `constraint type=physics_collision` | Collision component/preset | Collider + Rigidbody | BodyRigid | UsdPhysics schema | CollisionComponent | Rapier/cannon-es rigidbody |
-| `interaction trigger=on_grab` | Enhanced Input + Interaction Component | XR Interaction Toolkit Grabbable | Unigine Input + custom logic | (не входит в USD напрямую, нужен runtime-слой) | Gesture recognizer / ARKit hand tracking | `@react-three/xr` interaction |
+| `interaction trigger=on_grab` | Enhanced Input + Interaction Component | XR Interaction Toolkit Grabbable | Unigine Input + custom logic | (not directly part of USD, needs a runtime layer) | Gesture recognizer / ARKit hand tracking | `@react-three/xr` interaction |
 
-Это ориентировочная таблица, не исчерпывающая — каждый движковый skill должен уточнять маппинг для реально встретившихся типов узлов, а не ограничиваться этой таблицей.
+This is an indicative table, not an exhaustive one — each engine-specific skill should refine the mapping for node types it actually encounters, rather than limiting itself to this table.
 
-## Валидация перед экспортом
+## Validation before export
 
-Любой движковый skill, ПЕРЕД тем как звать MCP-инструменты конкретного движка, обязан:
-1. Проверить, что все `parent_id`/`from_node`/`to_node`/`target_node(s)` ссылаются на существующие `id` в `nodes`.
-2. Проверить на циклы в иерархии `parent_child`.
-3. Явно сообщить пользователю о любых `type`/`trigger`, для которых у этого конкретного движка ещё нет реализованного маппинга (см. таблицу выше) — не пропускать узел молча.
+Any engine-specific skill, BEFORE calling that engine's own MCP tools, must:
+1. Verify that every `parent_id`/`from_node`/`to_node`/`target_node(s)` references an existing `id` in `nodes`.
+2. Check for cycles in the `parent_child` hierarchy.
+3. Explicitly tell the user about any `type`/`trigger` for which that specific engine doesn't yet have an implemented mapping (see the table above) — never skip a node silently.

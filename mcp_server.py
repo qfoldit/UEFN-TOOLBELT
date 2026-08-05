@@ -566,14 +566,21 @@ def qfoldit_build_level_preset(
     qfoldit-oilgas skill result for oilgas_corrosion_watch). Never
     fabricates a result: an invalid/missing source returns
     status='error' explaining what's expected rather than inventing
-    numbers. Returns the underlying level document plus which canonical
-    MCP server backs this preset and whether it's reachable right now."""
+    numbers. `title` is checked through the same default-deny IP
+    watchlist/manifest gate as run_toolbelt_tool/execute_python before
+    the level is returned — a title referencing an unlicensed universe/
+    character/item (in any script; Cyrillic aliases included) comes back
+    as status='error' instead of a built level; a genuinely licensed
+    brand is allowed but its real royalty/conditions are attached under
+    licensing_conditions. Returns the underlying level document plus
+    which canonical MCP server backs this preset and whether it's
+    reachable right now."""
     try:
         source = json.loads(source_json)
     except json.JSONDecodeError as e:
         return json.dumps({"status": "error", "error": f"source_json is not valid JSON: {e}"}, indent=2)
     try:
-        doc = _build_level_preset(preset_key, source, title=title, difficulty=difficulty)
+        doc = _build_level_preset(preset_key, source, title=title, difficulty=difficulty, trust_runtime=_trust)
     except PresetError as e:
         return json.dumps({"status": "error", "error": str(e)}, indent=2)
     return json.dumps(doc, indent=2)
@@ -590,16 +597,21 @@ def qfoldit_build_arena_finale(
     (gamedesign.generate_multiplayer_challenge), not one of the ten
     science-domain presets. `source_json` is optional: omit it (or pass
     an empty object) to get a challenge with objective=None rather than
-    a fabricated one."""
+    a fabricated one. `title` goes through the same IP compliance gate
+    as qfoldit_build_level_preset — see its docstring."""
     source = None
     if source_json is not None:
         try:
             source = json.loads(source_json)
         except json.JSONDecodeError as e:
             return json.dumps({"status": "error", "error": f"source_json is not valid JSON: {e}"}, indent=2)
-    doc = _build_arena_finale(
-        source, title=title, round_duration_seconds=round_duration_seconds, team_count=team_count,
-    )
+    try:
+        doc = _build_arena_finale(
+            source, title=title, round_duration_seconds=round_duration_seconds, team_count=team_count,
+            trust_runtime=_trust,
+        )
+    except PresetError as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2)
     return json.dumps(doc, indent=2)
 
 
@@ -621,7 +633,11 @@ def qfoldit_build_universal_level(
     list records exactly which presets were included and which weren't,
     each with its canonical-MCP reachability snapshot, plus the arena
     finale segment if included. Deterministic: the same sources always
-    regenerate the same universal_seed."""
+    regenerate the same universal_seed. Every included segment's
+    generated text goes through the same IP compliance gate as
+    qfoldit_build_level_preset — an unlicensed reference anywhere in the
+    run returns status='error' for the whole build rather than shipping
+    a partially-blocked level."""
     try:
         sources = json.loads(sources_json)
     except json.JSONDecodeError as e:
@@ -634,6 +650,7 @@ def qfoldit_build_universal_level(
             include_arena_finale=include_arena_finale,
             round_duration_seconds=round_duration_seconds,
             team_count=team_count,
+            trust_runtime=_trust,
         )
     except PresetError as e:
         return json.dumps({"status": "error", "error": str(e)}, indent=2)

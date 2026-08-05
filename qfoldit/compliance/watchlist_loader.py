@@ -70,39 +70,56 @@ def load_all_watchlist_extensions(directory: str | None = None) -> dict[str, dic
     return merged
 
 
-def flatten_enabled_terms(extension: dict[str, dict[str, Any]]) -> list[str]:
-    """Turn {term: {"aliases": [...], "enabled": bool, ...}} into a flat
-    term list suitable for TrustRuntime(watchlist=...).
+def flatten_enabled_terms(extension: dict[str, dict[str, Any]]) -> tuple[list[str], dict[str, str]]:
+    """Turn {term: {"aliases": [...], "enabled": bool, ...}} into
+    (flat_term_list, alias_to_canonical_map) suitable for
+    TrustRuntime(watchlist=..., aliases=...).
 
     Respects 'enabled': false (defaults to enabled if the key is
     absent) so a high-false-positive-risk bare word documented in the
     JSON (e.g. a generic word flagged 'enabled': false) never silently
     ends up live in the matcher -- it stays visible in the file for
     review, but isn't auto-armed.
+
+    IMPORTANT FIX: earlier versions of this function flattened aliases
+    directly into the term list with no memory of which canonical term
+    they belonged to. That's harmless as long as no extension-watchlist
+    brand has a manifest entry (every match is blocked regardless of
+    which alias/term matched), but it's a real latent bug: the moment a
+    real manifest entry gets added for one of these brands, a match on
+    an ALIAS (e.g. "kamaz-54901") would fail to resolve to the manifest
+    key ("kamaz") and get treated as a phantom unmatched/unlicensed term
+    instead of the actual licensed one. Returning the alias map and
+    threading it through to TrustRuntime(aliases=...) closes that gap
+    now, before it's needed, rather than after someone hits it.
     """
     terms: list[str] = []
+    alias_map: dict[str, str] = {}
     for term, meta in extension.items():
         if meta.get("enabled", True) is False:
             continue
         terms.append(term)
-        terms.extend(a.lower() for a in meta.get("aliases", []))
-    return terms
+        for a in meta.get("aliases", []):
+            a_lower = a.lower()
+            terms.append(a_lower)
+            alias_map[a_lower] = term
+    return terms, alias_map
 
 
 def build_extended_watchlist(
     base_watchlist: list[str],
     directory: str | None = None,
-) -> tuple[list[str], dict[str, dict[str, Any]]]:
+) -> tuple[list[str], dict[str, dict[str, Any]], dict[str, str]]:
     """Convenience entry point: merge `base_watchlist` (e.g.
     trust_runtime.DEFAULT_WATCHLIST) with every enabled term from the
     watchlists/ directory.
 
-    Returns (merged_terms, metadata) -- pass merged_terms as
-    TrustRuntime(watchlist=...) and keep metadata around if you want to
-    look up category/rightsholder for a matched term yourself (e.g. in
-    a custom deny-reason formatter).
+    Returns (merged_terms, metadata, alias_map) -- pass merged_terms as
+    TrustRuntime(watchlist=...), alias_map as TrustRuntime(aliases=...),
+    and keep metadata around if you want to look up category/rightsholder
+    for a matched term yourself (e.g. in a custom deny-reason formatter).
     """
     extension = load_all_watchlist_extensions(directory)
-    extended_terms = flatten_enabled_terms(extension)
+    extended_terms, alias_map = flatten_enabled_terms(extension)
     merged = list(dict.fromkeys([*base_watchlist, *extended_terms]))  # dedupe, keep order
-    return merged, extension
+    return merged, extension, alias_map

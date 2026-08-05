@@ -32,196 +32,263 @@
     "naming the brand in text -- that is a separate, unsolved problem this",
     "file does not claim to cover.",
     "",
+    "English-only: this file (and every other file in this repo)",
+    "intentionally carries no non-English terms. An earlier revision added",
+    "transliterated aliases for several high-likelihood entries (Thermo",
+    "Fisher, Agilent, Illumina, Roche Diagnostics, Eppendorf, Sartorius,",
+    "Shimadzu, Bruker) to catch non-English-language references to the",
+    "same brands; those aliases were removed by policy, so that coverage",
+    "gap is open again.",
+    "",
     "Sourced from the manufacturer list supplied 2026-08-02 (broad-line,",
     "general-lab, analytical/spectrometric, and biotech-equipment vendors).",
     "Sub-brands owned by a parent company are listed as their own terms",
     "because prompts/asset names are more likely to reference the sub-brand",
     "than the parent (e.g. 'Invitrogen' rather than 'Thermo Fisher')."
   ],
-
   "thermo fisher scientific": {
-    "aliases": ["thermo fisher", "thermofisher"],
+    "aliases": [
+      "thermo fisher",
+      "thermofisher"
+    ],
     "rightsholder": "Thermo Fisher Scientific Inc.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["analytical instruments", "reagents", "consumables", "lab software"],
+    "product_lines": [
+      "analytical instruments",
+      "reagents",
+      "consumables",
+      "lab software"
+    ],
     "false_positive_risk": "low"
   },
   "thermo scientific": {
-    "aliases": [],
     "rightsholder": "Thermo Fisher Scientific Inc.",
     "category": "scientific_equipment_trademark",
     "notes": "Sub-brand of Thermo Fisher Scientific.",
     "false_positive_risk": "low"
   },
   "applied biosystems": {
-    "aliases": [],
     "rightsholder": "Thermo Fisher Scientific Inc.",
     "category": "scientific_equipment_trademark",
     "false_positive_risk": "low"
   },
   "invitrogen": {
-    "aliases": [],
     "rightsholder": "Thermo Fisher Scientific Inc.",
     "category": "scientific_equipment_trademark",
     "false_positive_risk": "low"
   },
   "fisher scientific": {
-    "aliases": [],
     "rightsholder": "Thermo Fisher Scientific Inc.",
     "category": "scientific_equipment_trademark",
     "false_positive_risk": "low"
   },
-
   "danaher": {
-    "aliases": ["danaher corporation"],
+    "aliases": [
+      "danaher corporation"
+    ],
     "rightsholder": "Danaher Corporation",
     "category": "scientific_equipment_trademark",
     "false_positive_risk": "low"
   },
   "beckman coulter": {
-    "aliases": [],
     "rightsholder": "Danaher Corporation (Beckman Coulter, Inc.)",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["centrifuges", "lab automation"],
+    "product_lines": [
+      "centrifuges",
+      "lab automation"
+    ],
     "false_positive_risk": "low"
   },
   "sciex": {
-    "aliases": [],
     "rightsholder": "Danaher Corporation (SCIEX)",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["mass spectrometry"],
+    "product_lines": [
+      "mass spectrometry"
+    ],
     "false_positive_risk": "low"
   },
   "leica microsystems": {
-    "aliases": [],
     "rightsholder": "Danaher Corporation (Leica Microsystems)",
     "category": "scientific_equipment_trademark",
     "notes": "Distinct legal entity from Leica Camera AG (unrelated company, cameras) -- do not conflate when documenting a manifest entry.",
     "false_positive_risk": "low"
   },
   "cytiva": {
-    "aliases": [],
     "rightsholder": "Danaher Corporation (Cytiva)",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["bioprocessing"],
+    "product_lines": [
+      "bioprocessing"
+    ],
     "false_positive_risk": "low"
   },
-
   "agilent": {
-    "aliases": ["agilent technologies"],
+    "aliases": [
+      "agilent technologies"
+    ],
     "rightsholder": "Agilent Technologies, Inc.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["chromatography", "mass spectrometry", "molecular spectroscopy"],
+    "product_lines": [
+      "chromatography",
+      "mass spectrometry",
+      "molecular spectroscopy"
+    ],
     "false_positive_risk": "low"
   },
-
   "milliporesigma": {
-    "aliases": ["millipore sigma"],
+    "aliases": [
+      "millipore sigma"
+    ],
     "rightsholder": "Merck KGaA",
     "category": "scientific_equipment_trademark",
     "notes": "MilliporeSigma is the U.S./Canada life-science brand of Merck KGaA (which trades as EMD in North America for trademark reasons unrelated to Merck & Co., Inc. -- two separate companies).",
     "false_positive_risk": "low"
   },
   "merck kgaa": {
-    "aliases": [],
     "rightsholder": "Merck KGaA",
     "category": "scientific_equipment_trademark",
     "false_positive_risk": "low"
   },
-
   "eppendorf": {
-    "aliases": [],
     "rightsholder": "Eppendorf SE",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["pipettes", "liquid handling", "centrifuges", "cell culture"],
+    "product_lines": [
+      "pipettes",
+      "liquid handling",
+      "centrifuges",
+      "cell culture"
+    ],
     "false_positive_risk": "low"
   },
   "mettler toledo": {
-    "aliases": ["mettler-toledo"],
+    "aliases": [
+      "mettler-toledo"
+    ],
     "rightsholder": "Mettler-Toledo International Inc.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["precision balances", "titrators", "pH meters", "thermal analysis"],
+    "product_lines": [
+      "precision balances",
+      "titrators",
+      "pH meters",
+      "thermal analysis"
+    ],
     "false_positive_risk": "low"
   },
   "sartorius": {
-    "aliases": [],
     "rightsholder": "Sartorius AG",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["balances", "filtration", "bioprocessing"],
+    "product_lines": [
+      "balances",
+      "filtration",
+      "bioprocessing"
+    ],
     "false_positive_risk": "low"
   },
   "ika": {
-    "aliases": ["ika-werke"],
+    "aliases": [
+      "ika-werke"
+    ],
     "rightsholder": "IKA-Werke GmbH & Co. KG",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["stirrers", "shakers", "rotary evaporators", "calorimeters"],
+    "product_lines": [
+      "stirrers",
+      "shakers",
+      "rotary evaporators",
+      "calorimeters"
+    ],
     "false_positive_risk": "high",
     "notes": "Three-letter brand name -- prefer the 'ika-werke' alias in production watchlists to reduce substring false positives from unrelated normalized text."
   },
   "memmert": {
-    "aliases": [],
     "rightsholder": "Memmert GmbH + Co. KG",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["incubators", "climate chambers", "drying ovens"],
+    "product_lines": [
+      "incubators",
+      "climate chambers",
+      "drying ovens"
+    ],
     "false_positive_risk": "low"
   },
-
   "shimadzu": {
-    "aliases": [],
     "rightsholder": "Shimadzu Corporation",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["chromatography", "spectroscopy"],
+    "product_lines": [
+      "chromatography",
+      "spectroscopy"
+    ],
     "false_positive_risk": "low"
   },
   "waters corporation": {
-    "aliases": ["waters corp"],
+    "aliases": [
+      "waters corp"
+    ],
     "rightsholder": "Waters Corporation",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["HPLC", "LC-MS"],
+    "product_lines": [
+      "HPLC",
+      "LC-MS"
+    ],
     "false_positive_risk": "medium",
     "notes": "'Waters' alone is too generic (common English word) -- only the qualified forms are listed as terms/aliases on purpose."
   },
   "bruker": {
-    "aliases": [],
     "rightsholder": "Bruker Corporation",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["NMR", "X-ray diffraction", "MALDI-TOF mass spectrometry"],
+    "product_lines": [
+      "NMR",
+      "X-ray diffraction",
+      "MALDI-TOF mass spectrometry"
+    ],
     "false_positive_risk": "low"
   },
   "perkinelmer": {
-    "aliases": ["perkin elmer"],
+    "aliases": [
+      "perkin elmer"
+    ],
     "rightsholder": "PerkinElmer, Inc. (Revvity, Inc.)",
     "category": "scientific_equipment_trademark",
     "notes": "Company renamed part of its business to Revvity in 2023 -- if generating current-day content, verify which entity name is live before writing a manifest entry.",
     "false_positive_risk": "low"
   },
-
   "illumina": {
-    "aliases": [],
     "rightsholder": "Illumina, Inc.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["NGS sequencing", "genetic analysis"],
+    "product_lines": [
+      "NGS sequencing",
+      "genetic analysis"
+    ],
     "false_positive_risk": "low"
   },
   "bio-rad": {
-    "aliases": ["biorad", "bio-rad laboratories"],
+    "aliases": [
+      "biorad",
+      "bio-rad laboratories"
+    ],
     "rightsholder": "Bio-Rad Laboratories, Inc.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["electrophoresis", "PCR / ddPCR", "western blot", "gel imaging"],
+    "product_lines": [
+      "electrophoresis",
+      "PCR / ddPCR",
+      "western blot",
+      "gel imaging"
+    ],
     "false_positive_risk": "low"
   },
   "qiagen": {
-    "aliases": [],
     "rightsholder": "QIAGEN N.V.",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["nucleic acid purification", "lab automation"],
+    "product_lines": [
+      "nucleic acid purification",
+      "lab automation"
+    ],
     "false_positive_risk": "low"
   },
   "roche diagnostics": {
-    "aliases": [],
     "rightsholder": "F. Hoffmann-La Roche AG",
     "category": "scientific_equipment_trademark",
-    "product_lines": ["clinical diagnostics", "biochemical/immunochemical analyzers"],
+    "product_lines": [
+      "clinical diagnostics",
+      "biochemical/immunochemical analyzers"
+    ],
     "false_positive_risk": "medium",
     "notes": "'Roche' alone is a common surname -- only the qualified 'roche diagnostics' form is listed as a term on purpose."
   }

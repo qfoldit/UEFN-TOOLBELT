@@ -111,3 +111,18 @@ class PresetSourceRequiredError(PresetError):
     documented alternative to silently inventing one."""
 
     pass
+
+
+class PresetContentBlockedError(PresetError):
+    """Raised when a built level's text (title override, tagline, level/
+    achievement descriptions -- anything that could carry a prompt- or
+    source-controlled string) matches a compliance/trust_runtime.py
+    watchlist term with no covering license_manifest.json entry.
+    Presets are levels assembled from prompts; that text goes through the
+    SAME default-deny IP gate as run_toolbelt_tool/execute_python before a
+    level is ever returned, not just when something is actually placed in
+    UEFN. Never bypass this to "let the level through anyway" -- fix the
+    prompt/title, or add a real manifest entry if the brand is genuinely
+    licensed."""
+
+    pass

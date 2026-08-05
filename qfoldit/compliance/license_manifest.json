@@ -28,7 +28,9 @@
     "verification_source": "https://dev.epicgames.com/documentation/fortnite/lego-brand-rules-in-fortnite",
     "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
@@ -48,7 +50,9 @@
     "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/tmnt-brand-and-creator-rules-in-unreal-editor-for-fortnite",
     "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
@@ -65,17 +69,20 @@
     "rightsholder": "Skybound/AMC (via Epic Games IP Partner Licensing Agreement)",
     "scope": "The Walking Dead Universe (TWDU) islands built from official TWDU templates only",
     "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/the-walking-dead-universe-brand-rules-in-fortnite",
-    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_by": "checked against Epic's live Brand Rules pages, royalty percentage confirmed 2026-08-03",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
-    "royalty_pct": null,
-    "monetization_scope": "Within Fortnite only, TWDU-provided content only",
+    "royalty_pct": 12.0,
+    "monetization_scope": "Within Fortnite only, TWDU-provided content only. In-island transactions are NOT supported for this IP.",
     "rules": [
-      "Only use TWDU assets in TWDU islands — this restriction applies specifically to Walking Dead franchise assets.",
-      "Royalty percentage not confirmed from the excerpt fetched — verify the exact figure on the live Brand Rules page before publishing."
+      "Only the approved TWDU assets accessed through designated templates are usable.",
+      "You agree to share 12% of total island payout with Skybound; Epic deducts this automatically from engagement payout.",
+      "In-island transactions are currently not supported by this IP."
     ]
   },
   "squid game": {
@@ -84,7 +91,9 @@
     "verification_source": "https://dev.epicgames.com/documentation/en-us/fortnite/squid-game-brand-and-creator-rules-in-fortnite",
     "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
@@ -100,34 +109,42 @@
     "rightsholder": "Netflix / Sony Pictures Animation (via Epic Games IP Partner Licensing Agreement)",
     "scope": "KPop Demon Hunters islands built from official templates only",
     "verification_source": "https://dev.epicgames.com/documentation/fortnite/kpop-demon-hunters-brand-rules-in-fortnite",
-    "verified_by": "checked against Epic's live Game Collections page, 2026-08-02",
+    "verified_by": "checked against Epic's live Brand Rules pages, royalty percentage confirmed 2026-08-03",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
-    "royalty_pct": null,
-    "monetization_scope": "Within Fortnite only, presumed by pattern — verify on live Brand Rules page",
+    "royalty_pct": 15.0,
+    "monetization_scope": "Within Fortnite only. In-island transactions are NOT supported for this IP.",
     "rules": [
-      "Confirmed as a real Game Collections brand; specific Brand Rules text not independently fetched — verify condition details on the live page before relying on them."
+      "You agree to share 15% of total island payout with Netflix; Epic deducts this automatically.",
+      "You may import your own fully-owned assets, or other Epic-provided assets not tied to another IP Partner brand — but not another partner's IP.",
+      "In-island transactions are currently not supported by this IP."
     ]
   },
   "star wars": {
     "rightsholder": "Disney / Lucasfilm (via Epic Games IP Partner Licensing Agreement — Star Wars specifically, NOT a blanket Disney/Marvel license)",
     "scope": "Star Wars islands using Epic-provided Star Wars characters and Background Assets only",
     "verification_source": "https://dev.epicgames.com/documentation/fortnite/star-wars-brand-rules-in-fortnite",
-    "verified_by": "checked against Epic's live Brand Rules + Game Collections pages, 2026-08-02",
+    "verified_by": "checked against Epic's live Brand Rules pages, royalty percentage confirmed 2026-08-03",
     "verified_date": "2026-08-02",
-    "engine_versions_verified": ["UE5"],
+    "engine_versions_verified": [
+      "UE5"
+    ],
     "review_due": "2026-11-02",
     "template_only": true,
     "no_mixing_other_ip": true,
-    "royalty_pct": null,
-    "monetization_scope": "Within Fortnite only",
+    "royalty_pct": 20.0,
+    "monetization_scope": "Within Fortnite only. In-island transactions are NOT supported for this IP.",
     "rules": [
       "You must own/have rights to any additional content you add, sufficient to grant Epic its required license.",
+      "You agree to share 20% of your engagement payout with The Walt Disney Company for Star Wars islands.",
       "Can combine with Epic-provided assets not tied to another IP Partner Program brand, subject to those assets' own terms.",
-      "IMPORTANT SCOPE NOTE: this entry covers Star Wars only. It does NOT extend to Marvel, DC, or any other Disney/WBD property — those have no equivalent Game Collections page as of this verification and remain blocked."
+      "In-island transactions are currently not supported by this IP.",
+      "IMPORTANT SCOPE NOTE: this entry covers Star Wars only. It does NOT extend to Marvel, DC, or any other Disney/WBD property."
     ]
   }
 }
