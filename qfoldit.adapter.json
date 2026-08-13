@@ -1,0 +1,138 @@
+{
+  "spec": "qfoldit.engine-adapter/0.1",
+  "engine": {
+    "id": "uefn",
+    "name": "UEFN"
+  },
+  "adapter": {
+    "id": "qfoldit-uefn-toolbelt",
+    "version": "0.1.0"
+  },
+  "repository": {
+    "url": "https://github.com/undergroundrap/UEFN-TOOLBELT",
+    "inventory": {
+      "tools": 356,
+      "categories": "55+",
+      "inventory_note": "Tools counted directly from @register_tool decorator occurrences across the repo; registry.json is stale (164 entries only)."
+    }
+  },
+  "contracts": {
+    "uag": "qfoldit.uag/0.1"
+  },
+  "capabilities": [
+    {
+      "id": "scene.graph",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "scene.snapshot",
+      "level": "adapter",
+      "status": "supported"
+    },
+    {
+      "id": "node.create",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "node.update",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "node.delete",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "node.group",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "node.parent",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "geometry.procedural",
+      "level": "adapter",
+      "status": "partial",
+      "notes": "Procedural generation tools exist (procedural_place, arena_generate) but not verified against live UEFN."
+    },
+    {
+      "id": "materials",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "camera",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "lighting",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "physics",
+      "level": "native",
+      "status": "supported"
+    },
+    {
+      "id": "physics.joints",
+      "level": "adapter",
+      "status": "partial",
+      "notes": "Joint support is adapter-level; not tested against live UEFN."
+    },
+    {
+      "id": "interaction",
+      "level": "adapter",
+      "status": "partial",
+      "notes": "No native interaction system; only basic selection via Python callbacks."
+    },
+    {
+      "id": "uag.validate",
+      "level": "adapter",
+      "status": "supported",
+      "notes": "UAG validation implemented in Python, dependency-free."
+    },
+    {
+      "id": "uag.apply",
+      "level": "adapter",
+      "status": "supported",
+      "notes": "UAG application dispatches to existing Toolbelt primitives."
+    },
+    {
+      "id": "scientific.visualization",
+      "level": "adapter",
+      "status": "partial",
+      "notes": "No native Niagara or visual feedback layer; scientific state is only logged, not rendered."
+    }
+  ],
+  "actions": [
+    {
+      "canonical": "scene.snapshot",
+      "support": "adapter",
+      "tools": ["worldstate_snapshot"]
+    },
+    {
+      "canonical": "node.group",
+      "support": "adapter",
+      "tools": ["spawn_group_node"]
+    },
+    {
+      "canonical": "experience.validate",
+      "support": "adapter",
+      "tools": ["uag_validate"]
+    },
+    {
+      "canonical": "experience.apply",
+      "support": "adapter",
+      "tools": ["uag_apply"]
+    }
+  ],
+  "notes": "UEFN adapter uses Python and an external MCP process. Interaction and scientific.visualization are not yet implemented; they are the primary blockers to reaching 5/5 success. geometry.procedural and physics.joints are partially supported and require live-engine validation."
+}
