@@ -91,7 +91,7 @@
       "id": "interaction",
       "level": "adapter",
       "status": "partial",
-      "notes": "No native interaction system; only basic selection via Python callbacks."
+      "notes": "interaction_create/get/list now implemented (Content/Python/UEFN_Toolbelt/tools/interaction_tools.py), tagging actors with a real, persistent qfoldit:interaction:<type> tag. Verified: imports resolve, MECHANIC_SCHEME/GAMEPLAY_MECHANICS stay in sync, uag_apply dispatches correctly against a stubbed unreal module. NOT yet verified against a live Editor session \u2014 status stays partial until a real in-Editor smoke test confirms tagging/read-back on an actual level, matching the same bar Unity/UNIGINE cleared before their own status flip."
     },
     {
       "id": "uag.validate",
@@ -109,29 +109,37 @@
       "id": "scientific.visualization",
       "level": "adapter",
       "status": "partial",
-      "notes": "No native Niagara or visual feedback layer; scientific state is only logged, not rendered."
+      "notes": "scientific_visualization_create/scientific_binding_create/get now implemented (Content/Python/UEFN_Toolbelt/tools/scientific_visualization_tools.py), spawning a mechanic-differentiated mesh+material via the existing material_apply_preset tool. Verified at the code/logic level (see above); NOT yet verified against a live Editor session \u2014 status stays partial until confirmed there too."
     }
   ],
   "actions": [
     {
       "canonical": "scene.snapshot",
       "support": "adapter",
-      "tools": ["worldstate_snapshot"]
+      "tools": [
+        "worldstate_snapshot"
+      ]
     },
     {
       "canonical": "node.group",
       "support": "adapter",
-      "tools": ["spawn_group_node"]
+      "tools": [
+        "spawn_group_node"
+      ]
     },
     {
       "canonical": "experience.validate",
       "support": "adapter",
-      "tools": ["uag_validate"]
+      "tools": [
+        "uag_validate"
+      ]
     },
     {
       "canonical": "experience.apply",
       "support": "adapter",
-      "tools": ["uag_apply"]
+      "tools": [
+        "uag_apply"
+      ]
     }
   ],
   "notes": "UEFN adapter uses Python and an external MCP process. Interaction and scientific.visualization are not yet implemented; they are the primary blockers to reaching 5/5 success. geometry.procedural and physics.joints are partially supported and require live-engine validation."
