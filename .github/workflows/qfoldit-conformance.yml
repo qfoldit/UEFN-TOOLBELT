@@ -1,0 +1,13 @@
+name: qFoldIT Conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  conformance:
+    uses: qfoldit/.github/.github/workflows/reusable-qfoldit-conformance.yml@main
+    with:
+      manifest_path: qfoldit.adapter.json
+      require_manifest: true
