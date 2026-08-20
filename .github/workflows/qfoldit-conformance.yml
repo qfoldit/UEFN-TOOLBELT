@@ -6,8 +6,26 @@ on:
     branches: [main]
 
 jobs:
-  conformance:
+  adapter:
     uses: qfoldit/.github/.github/workflows/reusable-qfoldit-conformance.yml@main
     with:
       manifest_path: qfoldit.adapter.json
       require_manifest: true
+
+  uag-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout runtime repository
+        uses: actions/checkout@v4
+      - name: Checkout qFoldIT governance kit
+        uses: actions/checkout@v4
+        with:
+          repository: qfoldit/.github
+          path: .qfoldit-governance
+          ref: main
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate canonical compiled UAG package
+        run: python .qfoldit-governance/conformance/uag/validate.py .qfoldit-governance/conformance/uag/fixtures/compiled-mission.json
