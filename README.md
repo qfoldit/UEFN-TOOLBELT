@@ -8,6 +8,8 @@
 > **Epic MCP boundary:** The bundled Toolbelt MCP bridge is a separate, local MCP surface—not Epic's official UEFN MCP server. The latest upstream documentation reports that registering `UEFN_Toolbelt` in-process did not make it discoverable through the external official server on the audited UEFN 42.00 build. A successful local registration is therefore not proof of official Epic exposure. See the [upstream official-MCP analysis](https://github.com/undergroundrap/UEFN-TOOLBELT/blob/main/docs/OFFICIAL_MCP_AND_TOOLBELT.md).
 >
 > **Security/version warning:** Do not assume this older fork contains upstream v2.5.0's bridge security and reliability fixes. Treat its Python code and bridge as privileged local development software; review before execution and do not expose editor-control endpoints to a LAN, tunnel or public network.
+>
+> **Canonical qFoldIT integration validation (2026-10-12):** The project owner confirms the live UEFN connection and real editor operations were fully tested locally through the canonical [`UEFN-QFOLDIT`](https://github.com/qfoldit/UEFN-QFOLDIT) integration; its [sidecar CI passed](https://github.com/qfoldit/UEFN-QFOLDIT/actions/runs/38286359765). This validates the current qFoldIT integration path, not this historical Python bridge or every one of the 362 upstream Toolbelt capabilities. The wider Rust workspace CI remains blocked; see the [Rust implementation status](https://github.com/qfoldit/UEFN-QFOLDIT/blob/main/docs/RUST-IMPLEMENTATION-STATUS-2026-10-12.md).
 
 **355 Professional Tools for UEFN Python Integration.**
 
