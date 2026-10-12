@@ -1,4 +1,17 @@
 # UEFN TOOLBELT
+# UEFN TOOLBELT
+
+> **qFoldIT STATUS — FROZEN MIGRATION SOURCE (checked 2026-10-12)**  
+> This is a historical qFoldIT fork, not a mirror of the current upstream release. The original [`undergroundrap/UEFN-TOOLBELT`](https://github.com/undergroundrap/UEFN-TOOLBELT) advertises **v2.5.0, 362 tools and 55 categories**; tool counts and code described below belong to this older snapshot and must not be presented as current upstream parity.  
+>
+> **Canonical qFoldIT development:** [`qfoldit/UEFN-QFOLDIT`](https://github.com/qfoldit/UEFN-QFOLDIT), especially [`crates/uefn-toolbelt`](https://github.com/qfoldit/UEFN-QFOLDIT/tree/main/crates/uefn-toolbelt) and the [Epic UEFN MCP integration contract](https://github.com/qfoldit/UEFN-QFOLDIT/blob/main/docs/UEFN-EPIC-MCP-INTEGRATION.md). New production features should be developed in the canonical repository, not added to this frozen Python snapshot.
+>
+> **Epic MCP boundary:** The bundled Toolbelt MCP bridge is a separate local MCP surface—not Epic's official UEFN MCP server. Registration of a custom toolset in-process must not be treated as proof that the external Epic endpoint exposes it.
+>
+> **Security/version warning:** Do not assume this older fork contains upstream v2.5.0's bridge security and reliability fixes. Treat its Python code and bridge as privileged local development software; review before execution and do not expose editor-control endpoints to a LAN, tunnel or public network.
+>
+> **Canonical qFoldIT integration validation (2026-10-12):** The project owner confirms the live UEFN connection and real editor operations were fully tested locally through the canonical [`UEFN-QFOLDIT`](https://github.com/qfoldit/UEFN-QFOLDIT) integration; its [sidecar CI passed](https://github.com/qfoldit/UEFN-QFOLDIT/actions/runs/38286359765). This validates the current qFoldIT integration path, not this historical Python bridge or every legacy Toolbelt capability. The broader Rust workspace CI remains blocked; see the [Rust implementation status](https://github.com/qfoldit/UEFN-QFOLDIT/blob/main/docs/RUST-IMPLEMENTATION-STATUS-2026-10-12.md).
+
 **355 Professional Tools for UEFN Python Integration.**
 
 > Built by **Ocean Bennett** — 2026
